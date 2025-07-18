@@ -29,6 +29,39 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Database Setup
+
+このプロジェクトはDrizzle ORMとSupabaseを使用しています。
+
+### 環境変数の設定
+
+`.env.local`ファイルを作成し、以下の環境変数を設定してください：
+
+```bash
+# Supabase設定
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# データベース接続（Supabaseの接続文字列）
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+```
+
+### データベース操作
+
+```bash
+# マイグレーションファイルを生成
+pnpm db:generate
+
+# マイグレーションを実行
+pnpm db:migrate
+
+# データベースに直接プッシュ（開発時）
+pnpm db:push
+
+# Drizzle Studioを起動
+pnpm db:studio
+```
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
