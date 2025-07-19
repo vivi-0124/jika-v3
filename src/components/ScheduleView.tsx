@@ -1,47 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Clock, MapPin, User, Trash2, Wifi, Users, Loader2, BookOpen } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-
-interface Lecture {
-  id: number;
-  term: string;
-  dayOfWeek: string;
-  period: string;
-  classroom: string;
-  classroomCapacity: number;
-  targetCommon: string;
-  targetIntlStudies: string;
-  targetIntlCulture: string;
-  targetIntlTourism: string;
-  targetSportsHealth: string;
-  targetNursing: string;
-  targetHealthInfo: string;
-  isRemoteClass: string;
-  subjectName: string;
-  className: string;
-  credits: number;
-  concurrentSlots: string;
-  isPartTimeLecturer: string;
-  instructorName: string;
-}
-
-interface UserScheduleItem {
-  id: number;
-  userId: string;
-  createdAt: string;
-  lecture: Lecture;
-}
 
 export default function ScheduleView() {
-  const { userSchedule, removeFromSchedule } = useUser();
-  const [removingLectures, setRemovingLectures] = useState<Set<number>>(new Set());
+  const { userSchedule } = useUser();
 
   const days = ['月', '火', '水', '木', '金'];
   const periods = [
@@ -52,48 +14,12 @@ export default function ScheduleView() {
     { id: '５限', time: '16:30-18:00' }
   ];
 
-  const getTargetText = (lecture: Lecture) => {
-    if (lecture.targetCommon) return `共通科目 (${lecture.targetCommon})`;
-    if (lecture.targetIntlStudies) return `国際教養学科 (${lecture.targetIntlStudies})`;
-    if (lecture.targetIntlCulture) return `国際文化学科 (${lecture.targetIntlCulture})`;
-    if (lecture.targetIntlTourism) return `国際観光学科 (${lecture.targetIntlTourism})`;
-    if (lecture.targetSportsHealth) return `スポーツ健康学科 (${lecture.targetSportsHealth})`;
-    if (lecture.targetNursing) return `看護学科 (${lecture.targetNursing})`;
-    if (lecture.targetHealthInfo) return `健康情報学科 (${lecture.targetHealthInfo})`;
-    return '';
-  };
-
-  const getRemoteClassIcon = (isRemoteClass: string) => {
-    if (isRemoteClass === '遠隔') return <Wifi className="h-3 w-3 text-blue-500" />;
-    if (isRemoteClass === 'ハイブリッド') return <Users className="h-3 w-3 text-green-500" />;
-    return null;
-  };
-
   // 指定された曜日・時限の授業を取得
   const getLectureAtTime = (day: string, period: string) => {
     return userSchedule.find(item => 
       item.lecture.dayOfWeek === day && 
       item.lecture.period === period
     );
-  };
-
-  // 授業を削除
-  const handleRemoveLecture = async (lectureId: number) => {
-    if (removingLectures.has(lectureId)) return;
-
-    setRemovingLectures(prev => new Set(prev).add(lectureId));
-    
-    try {
-      await removeFromSchedule(lectureId);
-    } catch (error) {
-      console.error('授業削除エラー:', error);
-    } finally {
-      setRemovingLectures(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(lectureId);
-        return newSet;
-      });
-    }
   };
 
   return (
@@ -179,7 +105,6 @@ export default function ScheduleView() {
           </table>
         </div>
       </div>
-
     </div>
   );
 } 

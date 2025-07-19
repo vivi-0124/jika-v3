@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { eq, like, and, or, desc, isNotNull, ne } from 'drizzle-orm';
+import { eq, like, and, or, isNotNull, ne } from 'drizzle-orm';
 import * as schema from './schema';
 
 // 環境変数からデータベースURLを取得

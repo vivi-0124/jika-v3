@@ -4,19 +4,20 @@ import { getLectureById } from '@/db';
 // 授業詳細取得API
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const id = parseInt(params.id);
+    const lectureId = parseInt(id);
     
-    if (isNaN(id)) {
+    if (isNaN(lectureId)) {
       return NextResponse.json(
         { error: '無効な授業IDです' },
         { status: 400 }
       );
     }
 
-    const lecture = await getLectureById(id);
+    const lecture = await getLectureById(lectureId);
     
     if (!lecture) {
       return NextResponse.json(

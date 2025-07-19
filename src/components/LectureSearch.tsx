@@ -4,12 +4,35 @@ import { useState } from 'react';
 import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
 interface LectureSearchProps {
-  onSearch: (results: any[]) => void;
+  onSearch: (results: Lecture[]) => void;
+}
+
+interface Lecture {
+  id: number;
+  term: string;
+  dayOfWeek: string;
+  period: string;
+  classroom: string;
+  classroomCapacity: number;
+  targetCommon: string;
+  targetIntlStudies: string;
+  targetIntlCulture: string;
+  targetIntlTourism: string;
+  targetSportsHealth: string;
+  targetNursing: string;
+  targetHealthInfo: string;
+  isRemoteClass: string;
+  subjectName: string;
+  className: string;
+  credits: number;
+  concurrentSlots: string;
+  isPartTimeLecturer: string;
+  instructorName: string;
 }
 
 export default function LectureSearch({ onSearch }: LectureSearchProps) {

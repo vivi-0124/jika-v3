@@ -1,23 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Calendar, BookOpen, Clock, MapPin, User, Home, Settings, Bell, Plus, Share, CheckSquare, Moon } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Calendar, User, Share, CheckSquare, Moon } from 'lucide-react';
 import LectureSearch from '@/components/LectureSearch';
 import ScheduleView from '@/components/ScheduleView';
 import LectureList from '@/components/LectureList';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Aurora from '@/components/blocks/backgrounds/Aurora/Aurora';
 
+interface Lecture {
+  id: number;
+  term: string;
+  dayOfWeek: string;
+  period: string;
+  classroom: string;
+  classroomCapacity: number;
+  targetCommon: string;
+  targetIntlStudies: string;
+  targetIntlCulture: string;
+  targetIntlTourism: string;
+  targetSportsHealth: string;
+  targetNursing: string;
+  targetHealthInfo: string;
+  isRemoteClass: string;
+  subjectName: string;
+  className: string;
+  credits: number;
+  concurrentSlots: string;
+  isPartTimeLecturer: string;
+  instructorName: string;
+}
+
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'search' | 'schedule'>('schedule');
-  const [lectures, setLectures] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [lectures, setLectures] = useState<Lecture[]>([]);
 
   // ボトムバーのアクティブ状態を管理
   const [activeBottomTab, setActiveBottomTab] = useState<'schedule' | 'search' | 'share' | 'todo'>('schedule');
@@ -89,7 +107,7 @@ export default function HomePage() {
                   <h2 className="text-xl font-bold text-white">授業検索</h2>
                 </div>
                 <LectureSearch onSearch={(results) => setLectures(results)} />
-                <LectureList lectures={lectures} loading={loading} />
+                <LectureList lectures={lectures} loading={false} />
               </div>
             )}
 

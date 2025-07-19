@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, varchar, integer, smallint } from 'drizzle-orm/pg-core';
+import { pgTable, serial, timestamp, varchar, integer, smallint } from 'drizzle-orm/pg-core';
 
 // 授業テーブル（実際のエクセルデータに合わせて）
 export const lectures = pgTable('lectures', {

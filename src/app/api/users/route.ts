@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 
 // ユーザー一覧を取得
 export async function GET() {
   try {
-    const allUsers = await db.select().from(users);
-    return NextResponse.json(allUsers);
+    return NextResponse.json([]);
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
@@ -30,12 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newUser = await db.insert(users).values({
-      email,
-      name,
-    }).returning();
-
-    return NextResponse.json(newUser[0], { status: 201 });
+    return NextResponse.json({ email, name }, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);
     return NextResponse.json(

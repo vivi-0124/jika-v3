@@ -2,10 +2,40 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+interface Lecture {
+  id: number;
+  term: string;
+  dayOfWeek: string;
+  period: string;
+  classroom: string;
+  classroomCapacity: number;
+  targetCommon: string;
+  targetIntlStudies: string;
+  targetIntlCulture: string;
+  targetIntlTourism: string;
+  targetSportsHealth: string;
+  targetNursing: string;
+  targetHealthInfo: string;
+  isRemoteClass: string;
+  subjectName: string;
+  className: string;
+  credits: number;
+  concurrentSlots: string;
+  isPartTimeLecturer: string;
+  instructorName: string;
+}
+
+interface UserScheduleItem {
+  id: number;
+  userId: string;
+  createdAt: string;
+  lecture: Lecture;
+}
+
 interface UserContextType {
   userId: string | null;
   setUserId: (id: string) => void;
-  userSchedule: any[];
+  userSchedule: UserScheduleItem[];
   addToSchedule: (lectureId: number) => Promise<void>;
   removeFromSchedule: (lectureId: number) => Promise<void>;
   refreshSchedule: () => Promise<void>;
@@ -15,7 +45,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserIdState] = useState<string | null>(null);
-  const [userSchedule, setUserSchedule] = useState<any[]>([]);
+  const [userSchedule, setUserSchedule] = useState<UserScheduleItem[]>([]);
 
   // ローカルストレージからユーザーIDを復元
   useEffect(() => {
