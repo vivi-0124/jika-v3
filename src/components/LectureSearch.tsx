@@ -112,7 +112,19 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
               className="pl-10 pr-4 py-3 border-white/20 focus:border-indigo-400 focus:ring-indigo-400 bg-black/20 backdrop-blur-sm text-white placeholder:text-white/60"
               onKeyPress={(e) => e.key === 'Enter' && !isPending && handleSearch()}
               disabled={isPending}
+              data-testid="search-input"
             />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-white/60 hover:text-white"
+                data-testid="clear-search"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           
           <div className="flex items-center justify-between">
@@ -136,6 +148,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
               onClick={handleSearch}
               disabled={isPending}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg disabled:opacity-50"
+              data-testid="search-button"
             >
               {isPending ? '検索中...' : '検索'}
             </Button>
@@ -153,7 +166,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
                   onValueChange={(value) => setFilters({ ...filters, dayOfWeek: value })}
                   disabled={isPending}
                 >
-                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
+                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white" data-testid="day-filter">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-white/20 text-white/80">
@@ -175,7 +188,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
                   onValueChange={(value) => setFilters({ ...filters, period: value })}
                   disabled={isPending}
                 >
-                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
+                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white" data-testid="period-filter">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-white/20 text-white/80">
@@ -197,7 +210,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
                   onValueChange={(value) => setFilters({ ...filters, term: value })}
                   disabled={isPending}
                 >
-                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
+                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white" data-testid="term-filter">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-white/20 text-white/80">
@@ -214,7 +227,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
                   onValueChange={(value) => setFilters({ ...filters, target: value })}
                   disabled={isPending}
                 >
-                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
+                  <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white" data-testid="target-filter">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-white/20 text-white/80">
@@ -239,6 +252,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
                 size="sm"
                 className="flex items-center space-x-1 text-white/60 hover:text-white"
                 disabled={isPending}
+                data-testid="reset-filters"
               >
                 <X className="h-3 w-3" />
                 <span>フィルターをクリア</span>

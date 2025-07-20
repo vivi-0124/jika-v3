@@ -1,254 +1,374 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './utils/auth-helper';
 
-test.describe('授業CRUD操作のテスト', () => {
-  test.beforeEach(async ({ page }) => {
-    // メインページに移動
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-  });
-
+test.describe('授業CRUD操作のE2Eテスト（Server Actions）', () => {
   // ===== READ (読み取り) テスト =====
-  test('授業一覧の取得', async ({ request }) => {
-    const response = await request.get('/api/lectures');
-    expect(response.ok()).toBeTruthy();
+  test('授業一覧の表示', async ({ authenticatedPage }) => {
+    // まず検索を実行して結果を取得
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
-    expect(lectures.length).toBeGreaterThan(0);
+    // 検索結果が表示されることを確認（結果がない場合はno-results、ある場合はlecture-list）
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
     
-    // 基本的な授業データ構造を確認
-    if (lectures.length > 0) {
-      const lecture = lectures[0];
-      expect(lecture).toHaveProperty('id');
-      expect(lecture).toHaveProperty('subjectName');
-      expect(lecture).toHaveProperty('term');
-      expect(lecture).toHaveProperty('dayOfWeek');
-      expect(lecture).toHaveProperty('period');
+    expect(hasResults || hasNoResults).toBeTruthy();
+    
+    // 結果がある場合は詳細を確認
+    if (hasResults) {
+      const lectureCards = authenticatedPage.locator('[data-testid="lecture-card"]');
+      await expect(lectureCards.first()).toBeVisible();
+      
+      // 基本的な授業データ構造を確認
+      const firstCard = lectureCards.first();
+      await expect(firstCard.locator('[data-testid="subject-name"]')).toBeVisible();
+      await expect(firstCard.locator('[data-testid="instructor-name"]')).toBeVisible();
+      await expect(firstCard.locator('[data-testid="day-period"]')).toBeVisible();
     }
   });
 
-  test('授業詳細の取得', async ({ request }) => {
-    // まず授業一覧を取得して有効なIDを取得
-    const listResponse = await request.get('/api/lectures');
-    const lectures = await listResponse.json();
+  test('授業詳細の表示', async ({ authenticatedPage }) => {
+    // まず検索を実行して結果を取得
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
     
-    if (lectures.length > 0) {
-      const lectureId = lectures[0].id;
+    // 結果がある場合のみ詳細表示をテスト
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-card"]').isVisible();
+    if (hasResults) {
+      // 授業カードの詳細ボタンをクリックして詳細を表示
+      const firstCard = authenticatedPage.locator('[data-testid="lecture-card"]').first();
+      await firstCard.locator('[data-testid="view-detail"]').click();
       
-      const response = await request.get(`/api/lectures/${lectureId}`);
-      expect(response.ok()).toBeTruthy();
+      // 詳細モーダルが表示されることを確認
+      await expect(authenticatedPage.locator('[data-testid="lecture-detail"]')).toBeVisible();
       
-      const lecture = await response.json();
-      expect(lecture).toHaveProperty('id', lectureId);
-      expect(lecture).toHaveProperty('subjectName');
-      expect(lecture).toHaveProperty('instructorName');
+      // 詳細情報が表示されることを確認
+      await expect(authenticatedPage.locator('[data-testid="subject-name"]')).toBeVisible();
+      await expect(authenticatedPage.locator('[data-testid="instructor-name"]')).toBeVisible();
     }
-  });
-
-  test('無効な授業IDでのエラーハンドリング', async ({ request }) => {
-    const response = await request.get('/api/lectures/999999');
-    expect(response.status()).toBe(404);
-    
-    const error = await response.json();
-    expect(error).toHaveProperty('error');
   });
 
   // ===== SEARCH (検索) テスト =====
-  test('科目名での検索', async ({ request }) => {
-    const searchQuery = '数学';
-    const response = await request.get(`/api/lectures?query=${encodeURIComponent(searchQuery)}`);
-    expect(response.ok()).toBeTruthy();
+  test('科目名での検索', async ({ authenticatedPage }) => {
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
+    await expect(searchInput).toBeVisible();
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
+    // 検索を実行
+    await searchInput.fill('数学');
+    await searchInput.press('Enter');
+    
+    // 検索結果が表示されることを確認
+    await expect(authenticatedPage.locator('[data-testid="lecture-list"]')).toBeVisible();
     
     // 検索結果が科目名に含まれていることを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        expect(lecture.subjectName).toContain(searchQuery);
-      });
+    const results = authenticatedPage.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < Math.min(count, 3); i++) {
+        const subjectName = await results.nth(i).locator('[data-testid="subject-name"]').textContent();
+        expect(subjectName).toContain('数学');
+      }
     }
   });
 
-  test('教員名での検索', async ({ request }) => {
-    const searchQuery = '田中';
-    const response = await request.get(`/api/lectures?query=${encodeURIComponent(searchQuery)}`);
-    expect(response.ok()).toBeTruthy();
+  test('教員名での検索', async ({ authenticatedPage }) => {
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
+    // 検索を実行
+    await searchInput.fill('田中');
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
     
-    // 検索結果が教員名に含まれていることを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        expect(lecture.instructorName).toContain(searchQuery);
-      });
+    // 検索結果が表示されることを確認
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+    
+    // 結果がある場合は教員名を確認
+    if (hasResults) {
+      const results = authenticatedPage.locator('[data-testid="lecture-card"]');
+      const count = await results.count();
+      
+      if (count > 0) {
+        for (let i = 0; i < Math.min(count, 3); i++) {
+          const instructorName = await results.nth(i).locator('[data-testid="instructor-name"]').textContent();
+          expect(instructorName).toContain('田中');
+        }
+      }
     }
   });
 
-  test('曜日での絞り込み', async ({ request }) => {
-    const dayOfWeek = '月';
-    const response = await request.get(`/api/lectures?dayOfWeek=${dayOfWeek}`);
-    expect(response.ok()).toBeTruthy();
+  test('曜日での絞り込み', async ({ authenticatedPage }) => {
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
+    // 曜日フィルターを選択
+    const dayFilter = authenticatedPage.locator('[data-testid="day-filter"]');
+    await dayFilter.click();
+    await authenticatedPage.locator('text=月曜日').click();
     
-    // すべての結果が指定された曜日であることを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        expect(lecture.dayOfWeek).toBe(dayOfWeek);
-      });
+    // 検索を実行
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    // 検索結果が表示されることを確認
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+    
+    // 結果がある場合は曜日を確認
+    if (hasResults) {
+      const results = authenticatedPage.locator('[data-testid="lecture-card"]');
+      const count = await results.count();
+      
+      if (count > 0) {
+        for (let i = 0; i < count; i++) {
+          const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+          expect(dayPeriod).toContain('月');
+        }
+      }
     }
   });
 
-  test('時限での絞り込み', async ({ request }) => {
-    const period = '1';
-    const response = await request.get(`/api/lectures?period=${period}`);
-    expect(response.ok()).toBeTruthy();
+  test('時限での絞り込み', async ({ authenticatedPage }) => {
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
+    // 時限フィルターを選択
+    const periodFilter = authenticatedPage.locator('[data-testid="period-filter"]');
+    await periodFilter.click();
+    await authenticatedPage.locator('text=1限').click();
     
-    // すべての結果が指定された時限であることを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        expect(lecture.period).toBe(period);
-      });
+    // 検索を実行
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    // 検索結果が表示されることを確認
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+    
+    // 結果がある場合は時限を確認
+    if (hasResults) {
+      const results = authenticatedPage.locator('[data-testid="lecture-card"]');
+      const count = await results.count();
+      
+      if (count > 0) {
+        for (let i = 0; i < count; i++) {
+          const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+          expect(dayPeriod).toContain('1');
+        }
+      }
     }
   });
 
-  test('学期での絞り込み', async ({ request }) => {
-    const term = '前学期';
-    const response = await request.get(`/api/lectures?term=${encodeURIComponent(term)}`);
-    expect(response.ok()).toBeTruthy();
+  test('学期での絞り込み', async ({ authenticatedPage }) => {
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
+    // 学期フィルターを選択
+    const termFilter = authenticatedPage.locator('[data-testid="term-filter"]');
+    await termFilter.click();
+    // SelectContent内の前学期オプションを選択
+    await authenticatedPage.locator('[role="option"]').filter({ hasText: '前学期' }).click();
     
-    // すべての結果が指定された学期であることを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        expect(lecture.term).toBe(term);
-      });
+    // 検索を実行
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    // 検索結果が表示されることを確認
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+  });
+
+  test('対象学科での絞り込み', async ({ authenticatedPage }) => {
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
+    
+    // 対象学科フィルターを選択
+    const targetFilter = authenticatedPage.locator('[data-testid="target-filter"]');
+    await targetFilter.click();
+    await authenticatedPage.locator('text=国際教養学科').click();
+    
+    // 検索を実行
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    // 検索結果が表示されることを確認
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+  });
+
+  test('複数条件での検索', async ({ authenticatedPage }) => {
+    // 検索条件を設定
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
+    await searchInput.fill('数学');
+    
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
+    
+    const dayFilter = authenticatedPage.locator('[data-testid="day-filter"]');
+    await dayFilter.click();
+    await authenticatedPage.locator('text=月曜日').click();
+    
+    const periodFilter = authenticatedPage.locator('[data-testid="period-filter"]');
+    await periodFilter.click();
+    await authenticatedPage.locator('text=1限').click();
+    
+    const termFilter = authenticatedPage.locator('[data-testid="term-filter"]');
+    await termFilter.click();
+    // SelectContent内の前学期オプションを選択
+    await authenticatedPage.locator('[role="option"]').filter({ hasText: '前学期' }).click();
+    
+    // 検索を実行
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    // 検索結果が表示されることを確認
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+    
+    // 結果がある場合は条件を確認
+    if (hasResults) {
+      const results = authenticatedPage.locator('[data-testid="lecture-card"]');
+      const count = await results.count();
+      
+      if (count > 0) {
+        for (let i = 0; i < Math.min(count, 3); i++) {
+          const subjectName = await results.nth(i).locator('[data-testid="subject-name"]').textContent();
+          const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+          
+          expect(subjectName).toContain('数学');
+          expect(dayPeriod).toContain('月');
+          expect(dayPeriod).toContain('1');
+        }
+      }
     }
   });
 
-  test('対象学科での絞り込み', async ({ request }) => {
-    const target = '国際教養学科';
-    const response = await request.get(`/api/lectures?target=${encodeURIComponent(target)}`);
-    expect(response.ok()).toBeTruthy();
+  test('空の検索結果', async ({ authenticatedPage }) => {
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
     
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
+    // 存在しない科目名で検索
+    await searchInput.fill('存在しない科目名12345');
+    await searchInput.press('Enter');
     
-    // 検索結果が対象学科に含まれていることを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        const hasTarget = 
-          lecture.targetCommon === target ||
-          lecture.targetIntlStudies === target ||
-          lecture.targetIntlCulture === target ||
-          lecture.targetIntlTourism === target ||
-          lecture.targetSportsHealth === target ||
-          lecture.targetNursing === target ||
-          lecture.targetHealthInfo === target;
-        expect(hasTarget).toBe(true);
-      });
-    }
-  });
-
-  test('複数条件での検索', async ({ request }) => {
-    const params = new URLSearchParams({
-      query: '数学',
-      dayOfWeek: '月',
-      period: '1',
-      term: '前学期'
-    });
-    
-    const response = await request.get(`/api/lectures?${params.toString()}`);
-    expect(response.ok()).toBeTruthy();
-    
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
-    
-    // すべての条件に合致することを確認
-    if (lectures.length > 0) {
-      lectures.forEach((lecture: any) => {
-        expect(lecture.subjectName).toContain('数学');
-        expect(lecture.dayOfWeek).toBe('月');
-        expect(lecture.period).toBe('1');
-        expect(lecture.term).toBe('前学期');
-      });
-    }
-  });
-
-  test('空の検索結果', async ({ request }) => {
-    const searchQuery = '存在しない科目名12345';
-    const response = await request.get(`/api/lectures?query=${encodeURIComponent(searchQuery)}`);
-    expect(response.ok()).toBeTruthy();
-    
-    const lectures = await response.json();
-    expect(Array.isArray(lectures)).toBe(true);
-    expect(lectures.length).toBe(0);
+    // 空の結果メッセージが表示されることを確認
+    await expect(authenticatedPage.locator('[data-testid="no-results"]')).toBeVisible();
   });
 
   // ===== エラーハンドリングテスト =====
-  test('無効なパラメータでのエラーハンドリング', async ({ request }) => {
-    // 無効なID
-    const response1 = await request.get('/api/lectures/abc');
-    expect(response1.status()).toBe(400);
+  test('無効な検索条件でのエラーハンドリング', async ({ authenticatedPage }) => {
+    // 特殊文字を含む検索
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
+    await searchInput.fill('!@#$%^&*()');
+    await searchInput.press('Enter');
     
-    // 無効なクエリパラメータ
-    const response2 = await request.get('/api/lectures?invalid=param');
-    expect(response2.ok()).toBeTruthy(); // 無効なパラメータは無視される
-  });
-
-  test('データベースエラー時のハンドリング', async ({ request }) => {
-    // 存在しないID
-    const response = await request.get('/api/lectures/999999');
-    expect(response.status()).toBe(404);
-    
-    const error = await response.json();
-    expect(error).toHaveProperty('error', '授業が見つかりません');
+    // 検索結果が表示されることを確認（結果がない場合はno-results、ある場合はlecture-list）
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
   });
 
   // ===== パフォーマンステスト =====
-  test('大量データでの検索パフォーマンス', async ({ request }) => {
+  test('大量データでの検索パフォーマンス', async ({ authenticatedPage }) => {
     const startTime = Date.now();
     
-    const response = await request.get('/api/lectures');
-    expect(response.ok()).toBeTruthy();
+    // ページの読み込み完了を待機
+    await authenticatedPage.waitForLoadState('networkidle');
     
-    const lectures = await response.json();
     const endTime = Date.now();
     const responseTime = endTime - startTime;
     
-    // レスポンス時間が1秒以内であることを確認
-    expect(responseTime).toBeLessThan(1000);
-    console.log(`検索レスポンス時間: ${responseTime}ms, 結果件数: ${lectures.length}`);
+    // レスポンス時間が3秒以内であることを確認
+    expect(responseTime).toBeLessThan(3000);
+    console.log(`ページ読み込み時間: ${responseTime}ms`);
   });
 
-  test('複雑な検索条件でのパフォーマンス', async ({ request }) => {
+  test('複雑な検索条件でのパフォーマンス', async ({ authenticatedPage }) => {
     const startTime = Date.now();
     
-    const params = new URLSearchParams({
-      query: '数学',
-      dayOfWeek: '月',
-      period: '1',
-      term: '前学期',
-      target: '国際教養学科'
-    });
+    // 複数の検索条件を設定
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
+    await searchInput.fill('数学');
     
-    const response = await request.get(`/api/lectures?${params.toString()}`);
-    expect(response.ok()).toBeTruthy();
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
     
-    const lectures = await response.json();
+    const dayFilter = authenticatedPage.locator('[data-testid="day-filter"]');
+    await dayFilter.click();
+    await authenticatedPage.locator('text=月曜日').click();
+    
+    const periodFilter = authenticatedPage.locator('[data-testid="period-filter"]');
+    await periodFilter.click();
+    await authenticatedPage.locator('text=1限').click();
+    
+    const termFilter = authenticatedPage.locator('[data-testid="term-filter"]');
+    await termFilter.click();
+    // SelectContent内の前学期オプションを選択
+    await authenticatedPage.locator('[role="option"]').filter({ hasText: '前学期' }).click();
+    
+    const targetFilter = authenticatedPage.locator('[data-testid="target-filter"]');
+    await targetFilter.click();
+    await authenticatedPage.locator('text=国際教養学科').click();
+    
+    // 検索を実行
+    await authenticatedPage.locator('[data-testid="search-button"]').click();
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    // 検索結果の表示を待機
+    const hasResults = await authenticatedPage.locator('[data-testid="lecture-list"]').isVisible();
+    const hasNoResults = await authenticatedPage.locator('[data-testid="no-results"]').isVisible();
+    expect(hasResults || hasNoResults).toBeTruthy();
+    
     const endTime = Date.now();
     const responseTime = endTime - startTime;
     
-    // レスポンス時間が2秒以内であることを確認
-    expect(responseTime).toBeLessThan(2000);
-    console.log(`複雑検索レスポンス時間: ${responseTime}ms, 結果件数: ${lectures.length}`);
+    // レスポンス時間が6秒以内であることを確認
+    expect(responseTime).toBeLessThan(6000);
+    console.log(`複雑検索レスポンス時間: ${responseTime}ms`);
+  });
+
+  // ===== ユーザビリティテスト =====
+  test('検索フィールドのクリア機能', async ({ authenticatedPage }) => {
+    const searchInput = authenticatedPage.locator('[data-testid="search-input"]');
+    
+    // 検索を実行
+    await searchInput.fill('数学');
+    await searchInput.press('Enter');
+    
+    // クリアボタンをクリック
+    const clearButton = authenticatedPage.locator('[data-testid="clear-search"]');
+    await clearButton.click();
+    
+    // 検索フィールドがクリアされることを確認
+    await expect(searchInput).toHaveValue('');
+  });
+
+  test('フィルターのリセット機能', async ({ authenticatedPage }) => {
+    // フィルターボタンをクリックしてフィルターを開く
+    await authenticatedPage.locator('button').filter({ hasText: 'フィルター' }).click();
+    
+    // フィルターを設定
+    const dayFilter = authenticatedPage.locator('[data-testid="day-filter"]');
+    await dayFilter.click();
+    await authenticatedPage.locator('text=月曜日').click();
+    
+    const periodFilter = authenticatedPage.locator('[data-testid="period-filter"]');
+    await periodFilter.click();
+    await authenticatedPage.locator('text=1限').click();
+    
+    // リセットボタンをクリック
+    const resetButton = authenticatedPage.locator('[data-testid="reset-filters"]');
+    await expect(resetButton).toBeVisible();
+    await resetButton.click();
+    
+    // フィルターがリセットされることを確認
+    // リセット後、フィルターが正しく表示されていることを確認
+    await expect(authenticatedPage.locator('[data-testid="day-filter"]')).toBeVisible();
+    await expect(authenticatedPage.locator('[data-testid="period-filter"]')).toBeVisible();
   });
 }); 

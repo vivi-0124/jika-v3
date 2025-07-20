@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, MapPin, User, BookOpen, Plus, Eye, Wifi, Users, Check, Loader2 } from 'lucide-react';
+import { Clock, MapPin, User, BookOpen, Plus, Eye, Wifi, Users, Check, Loader2, X } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ interface LectureListProps {
 export default function LectureList({ lectures, loading }: LectureListProps) {
   const { userSchedule, addToSchedule, removeFromSchedule, isOperating } = useUser();
   const [processingLectures, setProcessingLectures] = useState<Set<number>>(new Set());
+  const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
 
   const getTargetText = (lecture: Lecture) => {
     if (lecture.targetCommon) return '共通科目';
@@ -102,7 +103,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
 
   if (lectures.length === 0) {
     return (
-      <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
+      <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md" data-testid="no-results">
         <CardContent className="p-6">
           <div className="text-center py-12">
             <BookOpen className="mx-auto h-12 w-12 text-white/40" />
@@ -115,7 +116,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
   }
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-4 pb-20" data-testid="lecture-list">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white px-6">
           検索結果 ({lectures.length}件)
@@ -131,6 +132,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
           return (
             <Card 
               key={lecture.id} 
+              data-testid="lecture-card"
               className={`border-0 shadow-xl bg-black/20 backdrop-blur-md hover:shadow-2xl transition-all duration-300 ${
                 isProcessing ? 'opacity-75' : ''
               }`}
@@ -157,7 +159,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                         )}
                       </div>
                       
-                      <h3 className="text-base font-semibold text-white leading-tight">
+                      <h3 className="text-base font-semibold text-white leading-tight" data-testid="subject-name">
                         {lecture.subjectName}
                       </h3>
                       {lecture.className && (
@@ -171,13 +173,13 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                     {lecture.instructorName && (
                       <div className="flex items-center space-x-2 text-sm text-white/70">
                         <User className="h-4 w-4 text-white/50" />
-                        <span>{lecture.instructorName}</span>
+                        <span data-testid="instructor-name">{lecture.instructorName}</span>
                       </div>
                     )}
                     
                     <div className="flex items-center space-x-2 text-sm text-white/70">
                       <Clock className="h-4 w-4 text-white/50" />
-                      <span>{lecture.dayOfWeek}曜日 {lecture.period}限</span>
+                      <span data-testid="day-period">{lecture.dayOfWeek}曜日 {lecture.period}限</span>
                     </div>
                     
                     {lecture.classroom && (
@@ -207,6 +209,8 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                       size="sm" 
                       className="flex-1 bg-black/20 backdrop-blur-sm border-white/20 text-white hover:bg-white/10"
                       disabled={isDisabled}
+                      onClick={() => setSelectedLecture(lecture)}
+                      data-testid="view-detail"
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       詳細
@@ -216,6 +220,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                       disabled={isDisabled}
                       variant={inSchedule ? "destructive" : "default"}
                       size="sm"
+                      data-testid={inSchedule ? "remove-from-schedule" : "add-to-schedule"}
                       className={`flex-1 shadow-lg ${
                         inSchedule 
                           ? 'bg-red-600 hover:bg-red-700' 
@@ -247,6 +252,74 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
               <div className="flex items-center space-x-3">
                 <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
                 <span className="text-white text-sm">時間割を更新中...</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 詳細モーダル */}
+      {selectedLecture && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="border-0 shadow-2xl bg-black/90 backdrop-blur-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <CardContent className="p-6" data-testid="lecture-detail">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">授業詳細</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedLecture(null)}
+                  className="text-white/60 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{selectedLecture.subjectName}</h3>
+                  {selectedLecture.className && (
+                    <p className="text-white/70">{selectedLecture.className}</p>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-white/60">教員:</span>
+                    <span className="text-white ml-2">{selectedLecture.instructorName}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/60">曜日・時限:</span>
+                    <span className="text-white ml-2">{selectedLecture.dayOfWeek}曜日 {selectedLecture.period}限</span>
+                  </div>
+                  <div>
+                    <span className="text-white/60">教室:</span>
+                    <span className="text-white ml-2">{selectedLecture.classroom}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/60">単位:</span>
+                    <span className="text-white ml-2">{selectedLecture.credits}単位</span>
+                  </div>
+                  <div>
+                    <span className="text-white/60">学期:</span>
+                    <span className="text-white ml-2">{selectedLecture.term}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/60">定員:</span>
+                    <span className="text-white ml-2">{selectedLecture.classroomCapacity}名</span>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-3 pt-4">
+                  <Button
+                    onClick={() => handleScheduleToggle(selectedLecture.id)}
+                    disabled={isOperating}
+                    variant={isInSchedule(selectedLecture.id) ? "destructive" : "default"}
+                    className="flex-1"
+                  >
+                    {isInSchedule(selectedLecture.id) ? '時間割から削除' : '時間割に追加'}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

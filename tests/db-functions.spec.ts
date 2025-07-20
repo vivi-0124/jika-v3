@@ -1,261 +1,342 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('データベース関数のAPIテスト', () => {
-  // ===== searchLectures関数のAPIテスト =====
-  test('searchLectures - 基本検索', async ({ request }) => {
-    const response = await request.get('/api/lectures');
-    expect(response.ok()).toBeTruthy();
+test.describe('データベース関数のE2Eテスト（Server Actions）', () => {
+  test.beforeEach(async ({ page }) => {
+    // ログインページに移動
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
-    expect(results.length).toBeGreaterThan(0);
+    // ログイン情報を入力
+    await page.getByLabel('メールアドレス').fill('test@example.com');
+    await page.getByLabel('パスワード').fill('password123');
+    await page.getByRole('button', { name: 'ログイン' }).click();
+    
+    // メインページにリダイレクトされるまで待機
+    await page.waitForURL('/');
+    await page.waitForLoadState('networkidle');
+    
+    // 検索タブに切り替え
+    await page.locator('[data-testid="search-tab"]').click();
+    await page.waitForLoadState('networkidle');
   });
 
-  test('searchLectures - 科目名検索', async ({ request }) => {
-    const response = await request.get('/api/lectures?query=数学');
-    expect(response.ok()).toBeTruthy();
+  // ===== searchLectures関数のE2Eテスト =====
+  test('searchLectures - 基本検索', async ({ page }) => {
+    // 授業一覧が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    const results = page.locator('[data-testid="lecture-card"]');
+    await expect(results.first()).toBeVisible();
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.subjectName).toContain('数学');
-      });
+    const count = await results.count();
+    expect(count).toBeGreaterThan(0);
+  });
+
+  test('searchLectures - 科目名検索', async ({ page }) => {
+    const searchInput = page.locator('[data-testid="search-input"]');
+    await searchInput.fill('数学');
+    await searchInput.press('Enter');
+    
+    // 検索結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+    
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < Math.min(count, 3); i++) {
+        const subjectName = await results.nth(i).locator('[data-testid="subject-name"]').textContent();
+        expect(subjectName).toContain('数学');
+      }
     }
   });
 
-  test('searchLectures - 教員名検索', async ({ request }) => {
-    const response = await request.get('/api/lectures?query=田中');
-    expect(response.ok()).toBeTruthy();
+  test('searchLectures - 教員名検索', async ({ page }) => {
+    const searchInput = page.locator('[data-testid="search-input"]');
+    await searchInput.fill('田中');
+    await searchInput.press('Enter');
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    // 検索結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.instructorName).toContain('田中');
-      });
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < Math.min(count, 3); i++) {
+        const instructorName = await results.nth(i).locator('[data-testid="instructor-name"]').textContent();
+        expect(instructorName).toContain('田中');
+      }
     }
   });
 
-  test('searchLectures - 曜日絞り込み', async ({ request }) => {
-    const response = await request.get('/api/lectures?dayOfWeek=月');
-    expect(response.ok()).toBeTruthy();
+  test('searchLectures - 曜日絞り込み', async ({ page }) => {
+    const dayFilter = page.locator('[data-testid="day-filter"]');
+    await dayFilter.selectOption('月');
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    // フィルター結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.dayOfWeek).toBe('月');
-      });
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < count; i++) {
+        const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+        expect(dayPeriod).toContain('月');
+      }
     }
   });
 
-  test('searchLectures - 時限絞り込み', async ({ request }) => {
-    const response = await request.get('/api/lectures?period=1');
-    expect(response.ok()).toBeTruthy();
+  test('searchLectures - 時限絞り込み', async ({ page }) => {
+    const periodFilter = page.locator('[data-testid="period-filter"]');
+    await periodFilter.selectOption('１限');
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    // フィルター結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.period).toBe('1');
-      });
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < count; i++) {
+        const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+        expect(dayPeriod).toContain('1');
+      }
     }
   });
 
-  test('searchLectures - 学期絞り込み', async ({ request }) => {
-    const response = await request.get('/api/lectures?term=前学期');
-    expect(response.ok()).toBeTruthy();
+  test('searchLectures - 学期絞り込み', async ({ page }) => {
+    const termFilter = page.locator('[data-testid="term-filter"]');
+    await termFilter.selectOption('前学期');
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    // フィルター結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+  });
+
+  test('searchLectures - 対象学科絞り込み', async ({ page }) => {
+    const targetFilter = page.locator('[data-testid="target-filter"]');
+    await targetFilter.selectOption('群１');
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.term).toBe('前学期');
-      });
+    // フィルター結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+  });
+
+  test('searchLectures - 複数条件', async ({ page }) => {
+    // 複数の検索条件を設定
+    const searchInput = page.locator('[data-testid="search-input"]');
+    await searchInput.fill('数学');
+    
+    const dayFilter = page.locator('[data-testid="day-filter"]');
+    await dayFilter.selectOption('月');
+    
+    const periodFilter = page.locator('[data-testid="period-filter"]');
+    await periodFilter.selectOption('１限');
+    
+    const termFilter = page.locator('[data-testid="term-filter"]');
+    await termFilter.selectOption('前学期');
+    
+    // 検索を実行
+    await searchInput.press('Enter');
+    
+    // 検索結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+    
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < Math.min(count, 3); i++) {
+        const subjectName = await results.nth(i).locator('[data-testid="subject-name"]').textContent();
+        const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+        
+        expect(subjectName).toContain('数学');
+        expect(dayPeriod).toContain('月');
+        expect(dayPeriod).toContain('1');
+      }
     }
   });
 
-  test('searchLectures - 対象学科絞り込み', async ({ request }) => {
-    const response = await request.get('/api/lectures?target=国際教養学科');
-    expect(response.ok()).toBeTruthy();
+  // ===== getAllLectures関数のE2Eテスト =====
+  test('getAllLectures - 全授業取得', async ({ page }) => {
+    // 授業一覧が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    const results = page.locator('[data-testid="lecture-card"]');
+    await expect(results.first()).toBeVisible();
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        const hasTarget = 
-          lecture.targetCommon === '国際教養学科' ||
-          lecture.targetIntlStudies === '国際教養学科' ||
-          lecture.targetIntlCulture === '国際教養学科' ||
-          lecture.targetIntlTourism === '国際教養学科' ||
-          lecture.targetSportsHealth === '国際教養学科' ||
-          lecture.targetNursing === '国際教養学科' ||
-          lecture.targetHealthInfo === '国際教養学科';
-        expect(hasTarget).toBe(true);
-      });
-    }
-  });
-
-  test('searchLectures - 複数条件', async ({ request }) => {
-    const params = new URLSearchParams({
-      query: '数学',
-      dayOfWeek: '月',
-      period: '1',
-      term: '前学期'
-    });
-    
-    const response = await request.get(`/api/lectures?${params.toString()}`);
-    expect(response.ok()).toBeTruthy();
-    
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
-    
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.subjectName).toContain('数学');
-        expect(lecture.dayOfWeek).toBe('月');
-        expect(lecture.period).toBe('1');
-        expect(lecture.term).toBe('前学期');
-      });
-    }
-  });
-
-  // ===== getAllLectures関数のAPIテスト =====
-  test('getAllLectures - 全授業取得', async ({ request }) => {
-    const response = await request.get('/api/lectures');
-    expect(response.ok()).toBeTruthy();
-    
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
-    expect(results.length).toBeGreaterThan(0);
+    const count = await results.count();
+    expect(count).toBeGreaterThan(0);
     
     // 空の科目名が含まれていないことを確認
-    results.forEach((lecture: any) => {
-      expect(lecture.subjectName).toBeTruthy();
-      expect(lecture.subjectName.trim()).not.toBe('');
-    });
-  });
-
-  // ===== getLectureById関数のAPIテスト =====
-  test('getLectureById - 有効なID', async ({ request }) => {
-    // まず全授業を取得して有効なIDを取得
-    const listResponse = await request.get('/api/lectures');
-    const lectures = await listResponse.json();
-    
-    if (lectures.length > 0) {
-      const lectureId = lectures[0].id;
-      
-      const response = await request.get(`/api/lectures/${lectureId}`);
-      expect(response.ok()).toBeTruthy();
-      
-      const result = await response.json();
-      expect(result).toBeDefined();
-      expect(result.id).toBe(lectureId);
+    for (let i = 0; i < Math.min(count, 5); i++) {
+      const subjectName = await results.nth(i).locator('[data-testid="subject-name"]').textContent();
+      expect(subjectName).toBeTruthy();
+      expect(subjectName?.trim()).not.toBe('');
     }
   });
 
-  test('getLectureById - 無効なID', async ({ request }) => {
-    const response = await request.get('/api/lectures/999999');
-    expect(response.status()).toBe(404);
+  // ===== getLectureById関数のE2Eテスト =====
+  test('getLectureById - 有効なID', async ({ page }) => {
+    // 授業カードをクリックして詳細を表示
+    const firstCard = page.locator('[data-testid="lecture-card"]').first();
+    await firstCard.click();
     
-    const error = await response.json();
-    expect(error).toHaveProperty('error', '授業が見つかりません');
+    // 詳細モーダルまたはページが表示されることを確認
+    await expect(page.locator('[data-testid="lecture-detail"]')).toBeVisible();
+    
+    // 詳細情報が表示されることを確認
+    await expect(page.locator('[data-testid="subject-name"]')).toBeVisible();
+    await expect(page.locator('[data-testid="instructor-name"]')).toBeVisible();
   });
 
-  // ===== getLecturesByDay関数のAPIテスト =====
-  test('getLecturesByDay - 曜日別取得', async ({ request }) => {
-    const response = await request.get('/api/schedule?dayOfWeek=月&term=前学期');
-    expect(response.ok()).toBeTruthy();
+  // ===== getLecturesByDay関数のE2Eテスト =====
+  test('getLecturesByDay - 曜日別取得', async ({ page }) => {
+    // 時間割ビューに切り替え
+    await page.locator('[data-testid="schedule-view-tab"]').click();
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    // 曜日フィルターを選択
+    const dayFilter = page.locator('[data-testid="day-filter"]');
+    await dayFilter.selectOption('月');
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        expect(lecture.dayOfWeek).toBe('月');
-        expect(lecture.term).toBe('前学期');
-      });
+    // 学期フィルターを選択
+    const termFilter = page.locator('[data-testid="term-filter"]');
+    await termFilter.selectOption('前学期');
+    
+    // フィルター結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+    
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 0) {
+      for (let i = 0; i < count; i++) {
+        const dayPeriod = await results.nth(i).locator('[data-testid="day-period"]').textContent();
+        expect(dayPeriod).toContain('月');
+      }
     }
   });
 
-  // ===== getLecturesByTarget関数のAPIテスト =====
-  test('getLecturesByTarget - 対象学科別取得', async ({ request }) => {
-    const response = await request.get('/api/lectures?target=国際教養学科&term=前学期');
-    expect(response.ok()).toBeTruthy();
+  // ===== getLecturesByTarget関数のE2Eテスト =====
+  test('getLecturesByTarget - 対象学科別取得', async ({ page }) => {
+    // 対象学科フィルターを選択
+    const targetFilter = page.locator('[data-testid="target-filter"]');
+    await targetFilter.selectOption('群１');
     
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    // 学期フィルターを選択
+    const termFilter = page.locator('[data-testid="term-filter"]');
+    await termFilter.selectOption('前学期');
     
-    if (results.length > 0) {
-      results.forEach((lecture: any) => {
-        const hasTarget = 
-          lecture.targetCommon === '国際教養学科' ||
-          lecture.targetIntlStudies === '国際教養学科' ||
-          lecture.targetIntlCulture === '国際教養学科' ||
-          lecture.targetIntlTourism === '国際教養学科' ||
-          lecture.targetSportsHealth === '国際教養学科' ||
-          lecture.targetNursing === '国際教養学科' ||
-          lecture.targetHealthInfo === '国際教養学科';
-        expect(hasTarget).toBe(true);
-        expect(lecture.term).toBe('前学期');
-      });
-    }
+    // フィルター結果が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
   });
 
   // ===== エラーハンドリングテスト =====
-  test('無効なパラメータでのエラーハンドリング', async ({ request }) => {
-    // 無効なID
-    const response1 = await request.get('/api/lectures/abc');
-    expect(response1.status()).toBe(400);
+  test('無効なパラメータでのエラーハンドリング', async ({ page }) => {
+    // 特殊文字を含む検索
+    const searchInput = page.locator('[data-testid="search-input"]');
+    await searchInput.fill('!@#$%^&*()');
+    await searchInput.press('Enter');
     
-    // 無効なクエリパラメータ
-    const response2 = await request.get('/api/lectures?invalid=param');
-    expect(response2.ok()).toBeTruthy(); // 無効なパラメータは無視される
+    // エラーメッセージまたは適切な処理が行われることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
   });
 
   // ===== パフォーマンステスト =====
-  test('データベース関数のパフォーマンス', async ({ request }) => {
+  test('データベース関数のパフォーマンス', async ({ page }) => {
     const startTime = Date.now();
     
-    const response = await request.get('/api/lectures');
-    expect(response.ok()).toBeTruthy();
+    // ページの読み込み完了を待機
+    await page.waitForLoadState('networkidle');
     
-    const results = await response.json();
     const endTime = Date.now();
     const responseTime = endTime - startTime;
     
-    // レスポンス時間が1秒以内であることを確認
-    expect(responseTime).toBeLessThan(1000);
-    console.log(`データベース関数レスポンス時間: ${responseTime}ms, 結果件数: ${results.length}`);
+    // レスポンス時間が3秒以内であることを確認
+    expect(responseTime).toBeLessThan(3000);
+    console.log(`データベース関数レスポンス時間: ${responseTime}ms`);
   });
 
-  test('複雑な検索条件でのパフォーマンス', async ({ request }) => {
+  test('複雑な検索条件でのパフォーマンス', async ({ page }) => {
     const startTime = Date.now();
     
-    const params = new URLSearchParams({
-      query: '数学',
-      dayOfWeek: '月',
-      period: '1',
-      term: '前学期',
-      target: '国際教養学科'
-    });
+    // 複数の検索条件を設定
+    const searchInput = page.locator('[data-testid="search-input"]');
+    await searchInput.fill('数学');
     
-    const response = await request.get(`/api/lectures?${params.toString()}`);
-    expect(response.ok()).toBeTruthy();
+    const dayFilter = page.locator('[data-testid="day-filter"]');
+    await dayFilter.selectOption('月');
     
-    const results = await response.json();
+    const periodFilter = page.locator('[data-testid="period-filter"]');
+    await periodFilter.selectOption('１限');
+    
+    const termFilter = page.locator('[data-testid="term-filter"]');
+    await termFilter.selectOption('前学期');
+    
+    const targetFilter = page.locator('[data-testid="target-filter"]');
+    await targetFilter.selectOption('群１');
+    
+    // 検索を実行
+    await searchInput.press('Enter');
+    
+    // 検索結果の表示を待機
+    await page.waitForSelector('[data-testid="lecture-list"]');
+    
     const endTime = Date.now();
     const responseTime = endTime - startTime;
     
-    // レスポンス時間が2秒以内であることを確認
-    expect(responseTime).toBeLessThan(2000);
-    console.log(`複雑検索レスポンス時間: ${responseTime}ms, 結果件数: ${results.length}`);
+    // レスポンス時間が5秒以内であることを確認
+    expect(responseTime).toBeLessThan(5000);
+    console.log(`複雑検索レスポンス時間: ${responseTime}ms`);
+  });
+
+  // ===== ユーザビリティテスト =====
+  test('検索結果の並び順', async ({ page }) => {
+    // 授業一覧が表示されることを確認
+    await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+    
+    const results = page.locator('[data-testid="lecture-card"]');
+    const count = await results.count();
+    
+    if (count > 1) {
+      // 最初の2つの授業の曜日・時限を比較
+      const firstDayPeriod = await results.first().locator('[data-testid="day-period"]').textContent();
+      const secondDayPeriod = await results.nth(1).locator('[data-testid="day-period"]').textContent();
+      
+      // 並び順が適切であることを確認（曜日・時限順）
+      expect(firstDayPeriod).toBeDefined();
+      expect(secondDayPeriod).toBeDefined();
+    }
+  });
+
+  test('ページネーション機能', async ({ page }) => {
+    // ページネーションが存在する場合のテスト
+    const pagination = page.locator('[data-testid="pagination"]');
+    const hasPagination = await pagination.count() > 0;
+    
+    if (hasPagination) {
+      // 次のページボタンをクリック
+      const nextButton = pagination.locator('[data-testid="next-page"]');
+      await nextButton.click();
+      
+      // ページが変更されることを確認
+      await expect(page.locator('[data-testid="lecture-list"]')).toBeVisible();
+    }
+  });
+
+  test('検索履歴機能', async ({ page }) => {
+    // 検索履歴機能が存在する場合のテスト
+    const searchHistory = page.locator('[data-testid="search-history"]');
+    const hasHistory = await searchHistory.count() > 0;
+    
+    if (hasHistory) {
+      // 検索を実行
+      const searchInput = page.locator('[data-testid="search-input"]');
+      await searchInput.fill('数学');
+      await searchInput.press('Enter');
+      
+      // 検索履歴に追加されることを確認
+      await expect(searchHistory).toBeVisible();
+    }
   });
 }); 

@@ -206,6 +206,7 @@ export default function HomePage() {
                 size="sm" 
                 className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
                 onClick={() => setActiveBottomTab('schedule')}
+                data-testid="schedule-view-tab"
               >
                 <Calendar className={`h-5 w-5 ${activeBottomTab === 'schedule' ? 'text-white' : 'text-white/60'}`} />
               </Button>
@@ -214,6 +215,7 @@ export default function HomePage() {
                 size="sm" 
                 className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
                 onClick={() => setActiveBottomTab('search')}
+                data-testid="search-tab"
               >
                 <Search className={`h-5 w-5 ${activeBottomTab === 'search' ? 'text-white' : 'text-white/60'}`} />
               </Button>
@@ -222,6 +224,7 @@ export default function HomePage() {
                 size="sm" 
                 className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
                 onClick={() => setActiveBottomTab('share')}
+                data-testid="share-tab"
               >
                 <Share className={`h-5 w-5 ${activeBottomTab === 'share' ? 'text-white' : 'text-white/60'}`} />
               </Button>
@@ -230,6 +233,7 @@ export default function HomePage() {
                 size="sm" 
                 className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
                 onClick={() => setActiveBottomTab('todo')}
+                data-testid="todo-tab"
               >
                 <CheckSquare className={`h-5 w-5 ${activeBottomTab === 'todo' ? 'text-white' : 'text-white/60'}`} />
               </Button>

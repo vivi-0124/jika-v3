@@ -23,6 +23,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // テスト環境では認証をバイパス
+    if (typeof window !== 'undefined' && (window as any).__TEST_MODE__ && (window as any).__MOCK_AUTH__) {
+      const mockUser = {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        created_at: new Date().toISOString(),
+      } as User;
+      
+      setUser(mockUser);
+      setSession({
+        user: mockUser,
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+      } as Session);
+      setLoading(false);
+      return;
+    }
+
     // 初期セッションを取得
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
