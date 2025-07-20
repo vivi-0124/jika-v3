@@ -4,10 +4,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import { User } from '@supabase/supabase-js';
 import { 
-  getUserScheduleAPI, 
-  addLectureToScheduleAPI, 
-  removeLectureFromScheduleAPI 
-} from '@/lib/api';
+  getUserScheduleAction, 
+  addLectureToScheduleAction, 
+  removeLectureFromScheduleAction 
+} from '@/lib/actions/schedule-actions';
 import { toast } from 'sonner';
 
 interface Lecture {
@@ -72,7 +72,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setScheduleLoading(true);
     try {
-      const result = await getUserScheduleAPI(userId, '前学期');
+      const result = await getUserScheduleAction(userId, '前学期');
       
       if (result.success) {
         setUserSchedule((result.data as UserScheduleItem[]) || []);
@@ -103,7 +103,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setIsOperating(true);
     try {
-      const result = await addLectureToScheduleAPI(userId, lectureId);
+      const result = await addLectureToScheduleAction(userId, lectureId);
       
       if (result.success) {
         // 楽観的更新の代わりに時間割を再取得
@@ -137,7 +137,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setIsOperating(true);
     try {
-      const result = await removeLectureFromScheduleAPI(userId, lectureId);
+      const result = await removeLectureFromScheduleAction(userId, lectureId);
       
       if (result.success) {
         // 楽観的更新の代わりに時間割を再取得
