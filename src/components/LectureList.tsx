@@ -1,12 +1,11 @@
 'use client';
 
-import { Clock, MapPin, User, BookOpen, Plus, Eye, Wifi, Users, Check, Loader2, X } from 'lucide-react';
+import { BookOpen, Plus, Eye, Wifi, Users, Check, Loader2 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -47,16 +46,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
   const [processingLectures, setProcessingLectures] = useState<Set<number>>(new Set());
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
 
-  const getTargetText = (lecture: Lecture) => {
-    if (lecture.targetCommon) return '共通科目';
-    if (lecture.targetIntlStudies) return '国際教養学科';
-    if (lecture.targetIntlCulture) return '国際文化学科';
-    if (lecture.targetIntlTourism) return '国際観光学科';
-    if (lecture.targetSportsHealth) return 'スポーツ健康学科';
-    if (lecture.targetNursing) return '看護学科';
-    if (lecture.targetHealthInfo) return '健康情報学科';
-    return '';
-  };
+
 
   const getRemoteClassIcon = (isRemoteClass: string) => {
     if (isRemoteClass === '遠隔') return <Wifi className="h-3 w-3 text-blue-500" />;
@@ -173,40 +163,6 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                       )}
                     </div>
                   </div>
-                  
-                  {/* 詳細情報
-                  <div className="space-y-3">
-                    {lecture.instructorName && (
-                      <div className="flex items-center space-x-2 text-sm text-white/70">
-                        <User className="h-4 w-4 text-white/50" />
-                        <span data-testid="instructor-name">{lecture.instructorName}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center space-x-2 text-sm text-white/70">
-                      <Clock className="h-4 w-4 text-white/50" />
-                      <span data-testid="day-period">{lecture.dayOfWeek}曜日 {lecture.period}限</span>
-                    </div>
-                    
-                    {lecture.classroom && (
-                      <div className="flex items-center space-x-2 text-sm text-white/70">
-                        <MapPin className="h-4 w-4 text-white/50" />
-                        <span>{lecture.classroom}</span>
-                        {lecture.classroomCapacity && (
-                          <span className="text-white/50">(定員: {lecture.classroomCapacity}名)</span>
-                        )}
-                      </div>
-                    )}
-
-                    {getTargetText(lecture) && (
-                      <div className="flex items-center space-x-2 text-sm text-white/70">
-                        <span className="text-white/50">対象:</span>
-                        <span>{getTargetText(lecture)}</span>
-                      </div>
-                    )}
-                  </div> */}
-                  
-                  {/* <Separator className="bg-white/20" /> */}
                   
                   {/* アクションボタン */}
                   <div className="flex space-x-3">

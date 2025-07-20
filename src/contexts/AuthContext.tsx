@@ -4,6 +4,11 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+interface TestWindow extends Window {
+  __TEST_MODE__?: boolean;
+  __MOCK_AUTH__?: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -24,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // テスト環境では認証をバイパス
-    if (typeof window !== 'undefined' && (window as any).__TEST_MODE__ && (window as any).__MOCK_AUTH__) {
+    if (typeof window !== 'undefined' && (window as TestWindow).__TEST_MODE__ && (window as TestWindow).__MOCK_AUTH__) {
       const mockUser = {
         id: 'test-user-id',
         email: 'test@example.com',
