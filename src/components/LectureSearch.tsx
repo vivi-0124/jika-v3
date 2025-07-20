@@ -82,7 +82,7 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
 
   return (
     <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-      <CardContent className="px-6 space-y-4">
+      <CardContent className="space-y-4 p-6">
         {/* 検索バー */}
         <div className="space-y-4">
           <div className="flex items-center space-x-2 mb-4">

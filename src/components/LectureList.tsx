@@ -116,7 +116,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">
+        <h2 className="text-lg font-semibold text-white px-6">
           検索結果 ({lectures.length}件)
         </h2>
       </div>

@@ -45,7 +45,7 @@ export default function HomePage() {
       {/* オーロラ背景 */}
       <div className="fixed inset-0 z-0 bg-black">
         <Aurora
-          colorStops={["#68be8d", "#89c3eb", "#ffec47"]}
+          colorStops={["#000066", "#eb6d9a", "#000066"]}
           amplitude={1.0}
           blend={0.5}
           speed={1.0}
