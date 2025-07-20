@@ -23,7 +23,7 @@ export default function ScheduleView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* 時間割テーブル */}
       <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 overflow-hidden">
         <div className="overflow-x-auto">
