@@ -3,7 +3,7 @@
 import { useUser } from '@/contexts/UserContext';
 
 export default function ScheduleView() {
-  const { userSchedule } = useUser();
+  const { userSchedule, isAuthenticated, isLoading } = useUser();
 
   const days = ['月', '火', '水', '木', '金'];
   const periods = [
@@ -21,6 +21,34 @@ export default function ScheduleView() {
       item.lecture.period === period
     );
   };
+
+  // ローディング状態の表示
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pb-20">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 p-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            <span className="ml-3 text-white">時間割を読み込み中...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 認証されていない場合の表示
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6 pb-20">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 p-8">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-white mb-2">時間割を表示するにはログインが必要です</h3>
+            <p className="text-white/60">ログインすると、あなたの時間割が表示されます。</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">

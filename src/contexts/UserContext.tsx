@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
+import { User } from '@supabase/supabase-js';
 
 interface Lecture {
   id: number;
@@ -34,53 +36,58 @@ interface UserScheduleItem {
 
 interface UserContextType {
   userId: string | null;
-  setUserId: (id: string) => void;
+  user: User | null; // AuthContextから取得したユーザー情報
   userSchedule: UserScheduleItem[];
   addToSchedule: (lectureId: number) => Promise<void>;
   removeFromSchedule: (lectureId: number) => Promise<void>;
   refreshSchedule: () => Promise<void>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [userId, setUserIdState] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [userSchedule, setUserSchedule] = useState<UserScheduleItem[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
 
-  // ローカルストレージからユーザーIDを復元
-  useEffect(() => {
-    const savedUserId = localStorage.getItem('userId');
-    if (savedUserId) {
-      setUserIdState(savedUserId);
-    } else {
-      // 新しいユーザーIDを生成
-      const newUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      setUserIdState(newUserId);
-      localStorage.setItem('userId', newUserId);
+  // Supabase認証ユーザーのIDを使用
+  const userId = user?.id || null;
+  const isAuthenticated = !!user && !authLoading;
+
+  const refreshSchedule = useCallback(async () => {
+    if (!userId) {
+      setUserSchedule([]);
+      return;
     }
-  }, []);
 
-  const setUserId = (id: string) => {
-    setUserIdState(id);
-    localStorage.setItem('userId', id);
-  };
-
-  const refreshSchedule = async () => {
-    if (!userId) return;
-
+    setScheduleLoading(true);
     try {
       const response = await fetch(`/api/schedule/user?userId=${userId}&term=前学期`);
       if (response.ok) {
         const data = await response.json();
         setUserSchedule(data);
+      } else {
+        console.error('時間割の取得に失敗しました:', response.status);
+        setUserSchedule([]);
       }
     } catch (error) {
       console.error('時間割の取得に失敗しました:', error);
+      setUserSchedule([]);
+    } finally {
+      setScheduleLoading(false);
     }
-  };
+  }, [userId]);
 
   const addToSchedule = async (lectureId: number) => {
-    if (!userId) return;
+    if (!userId) {
+      throw new Error('ログインが必要です。先にログインしてください。');
+    }
+
+    if (!isAuthenticated) {
+      throw new Error('認証が必要です。先にログインしてください。');
+    }
 
     try {
       const response = await fetch('/api/schedule/user', {
@@ -94,8 +101,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         await refreshSchedule();
       } else {
-        const error = await response.json();
-        throw new Error(error.error || '授業の追加に失敗しました');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '授業の追加に失敗しました');
       }
     } catch (error) {
       console.error('授業追加エラー:', error);
@@ -104,7 +111,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const removeFromSchedule = async (lectureId: number) => {
-    if (!userId) return;
+    if (!userId) {
+      throw new Error('ログインが必要です。先にログインしてください。');
+    }
+
+    if (!isAuthenticated) {
+      throw new Error('認証が必要です。先にログインしてください。');
+    }
 
     try {
       const response = await fetch(`/api/schedule/user?userId=${userId}&lectureId=${lectureId}`, {
@@ -114,8 +127,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         await refreshSchedule();
       } else {
-        const error = await response.json();
-        throw new Error(error.error || '授業の削除に失敗しました');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '授業の削除に失敗しました');
       }
     } catch (error) {
       console.error('授業削除エラー:', error);
@@ -123,22 +136,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // ユーザーIDが設定されたら時間割を取得
+  // 認証状態が変更されたら時間割を取得
   useEffect(() => {
-    if (userId) {
-      refreshSchedule();
+    if (!authLoading) {
+      if (userId && isAuthenticated) {
+        refreshSchedule();
+      } else {
+        // ユーザーがログアウトした場合、時間割をクリア
+        setUserSchedule([]);
+      }
     }
-  }, [userId]);
+  }, [userId, authLoading, isAuthenticated, refreshSchedule]);
+
+  // デバッグ用：認証状態の変更をログ出力
+  useEffect(() => {
+    console.log('Auth state changed:', {
+      userId,
+      isAuthenticated,
+      authLoading,
+      userEmail: user?.email
+    });
+  }, [userId, isAuthenticated, authLoading, user]);
 
   return (
     <UserContext.Provider
       value={{
         userId,
-        setUserId,
+        user, // AuthContextから取得したユーザー情報を提供
         userSchedule,
         addToSchedule,
         removeFromSchedule,
         refreshSchedule,
+        isAuthenticated,
+        isLoading: authLoading || scheduleLoading,
       }}
     >
       {children}
