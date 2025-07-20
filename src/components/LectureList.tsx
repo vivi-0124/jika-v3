@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Lecture {
   id: number;
@@ -168,7 +174,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                     </div>
                   </div>
                   
-                  {/* 詳細情報 */}
+                  {/* 詳細情報
                   <div className="space-y-3">
                     {lecture.instructorName && (
                       <div className="flex items-center space-x-2 text-sm text-white/70">
@@ -198,9 +204,9 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                         <span>{getTargetText(lecture)}</span>
                       </div>
                     )}
-                  </div>
+                  </div> */}
                   
-                  <Separator className="bg-white/20" />
+                  {/* <Separator className="bg-white/20" /> */}
                   
                   {/* アクションボタン */}
                   <div className="flex space-x-3">
@@ -221,11 +227,11 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                       variant={inSchedule ? "destructive" : "default"}
                       size="sm"
                       data-testid={inSchedule ? "remove-from-schedule" : "add-to-schedule"}
-                      className={`flex-1 shadow-lg ${
+                      className={`flex-1 shadow-2xl bg-black/90 backdrop-blur-md border-1 ${
                         inSchedule 
-                          ? 'bg-red-600 hover:bg-red-700' 
-                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          ? 'bg-red-600/90 hover:bg-red-700/90 border-red-500/30' 
+                          : 'bg-indigo-600/90 hover:bg-indigo-700/90 border-indigo-500/30'
+                      } disabled:opacity-50 disabled:cursor-not-allowed text-white`}
                     >
                       {isProcessing ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -259,72 +265,66 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
       )}
 
       {/* 詳細モーダル */}
-      {selectedLecture && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="border-0 shadow-2xl bg-black/90 backdrop-blur-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <CardContent className="p-6" data-testid="lecture-detail">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">授業詳細</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedLecture(null)}
-                  className="text-white/60 hover:text-white"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
+      <Dialog open={!!selectedLecture} onOpenChange={(open) => !open && setSelectedLecture(null)}>
+        <DialogContent className="border-1 shadow-2xl bg-black/90 backdrop-blur-md max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white">授業詳細</DialogTitle>
+          </DialogHeader>
+          
+          {selectedLecture && (
+            <div className="space-y-4" data-testid="lecture-detail">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">{selectedLecture.subjectName}</h3>
+                {selectedLecture.className && (
+                  <p className="text-white/70">{selectedLecture.className}</p>
+                )}
               </div>
               
-              <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{selectedLecture.subjectName}</h3>
-                  {selectedLecture.className && (
-                    <p className="text-white/70">{selectedLecture.className}</p>
-                  )}
+                  <span className="text-white/60">教員:</span>
+                  <span className="text-white ml-2">{selectedLecture.instructorName}</span>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-white/60">教員:</span>
-                    <span className="text-white ml-2">{selectedLecture.instructorName}</span>
-                  </div>
-                  <div>
-                    <span className="text-white/60">曜日・時限:</span>
-                    <span className="text-white ml-2">{selectedLecture.dayOfWeek}曜日 {selectedLecture.period}限</span>
-                  </div>
-                  <div>
-                    <span className="text-white/60">教室:</span>
-                    <span className="text-white ml-2">{selectedLecture.classroom}</span>
-                  </div>
-                  <div>
-                    <span className="text-white/60">単位:</span>
-                    <span className="text-white ml-2">{selectedLecture.credits}単位</span>
-                  </div>
-                  <div>
-                    <span className="text-white/60">学期:</span>
-                    <span className="text-white ml-2">{selectedLecture.term}</span>
-                  </div>
-                  <div>
-                    <span className="text-white/60">定員:</span>
-                    <span className="text-white ml-2">{selectedLecture.classroomCapacity}名</span>
-                  </div>
+                <div>
+                  <span className="text-white/60">曜日・時限:</span>
+                  <span className="text-white ml-2">{selectedLecture.dayOfWeek}曜日 {selectedLecture.period}限</span>
                 </div>
-                
-                <div className="flex space-x-3 pt-4">
-                  <Button
-                    onClick={() => handleScheduleToggle(selectedLecture.id)}
-                    disabled={isOperating}
-                    variant={isInSchedule(selectedLecture.id) ? "destructive" : "default"}
-                    className="flex-1"
-                  >
-                    {isInSchedule(selectedLecture.id) ? '時間割から削除' : '時間割に追加'}
-                  </Button>
+                <div>
+                  <span className="text-white/60">教室:</span>
+                  <span className="text-white ml-2">{selectedLecture.classroom}</span>
+                </div>
+                <div>
+                  <span className="text-white/60">単位:</span>
+                  <span className="text-white ml-2">{selectedLecture.credits}単位</span>
+                </div>
+                <div>
+                  <span className="text-white/60">学期:</span>
+                  <span className="text-white ml-2">{selectedLecture.term}</span>
+                </div>
+                <div>
+                  <span className="text-white/60">定員:</span>
+                  <span className="text-white ml-2">{selectedLecture.classroomCapacity}名</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  onClick={() => handleScheduleToggle(selectedLecture.id)}
+                  disabled={isOperating}
+                  variant={isInSchedule(selectedLecture.id) ? "destructive" : "default"}
+                  className={`flex-1 shadow-2xl bg-black/90 backdrop-blur-md border-1 ${
+                    isInSchedule(selectedLecture.id)
+                      ? 'bg-red-600/90 hover:bg-red-700/90 border-red-500/30' 
+                      : 'bg-indigo-600/90 hover:bg-indigo-700/90 border-indigo-500/30'
+                  } disabled:opacity-50 disabled:cursor-not-allowed text-white`}
+                >
+                  {isInSchedule(selectedLecture.id) ? '時間割から削除' : '時間割に追加'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
