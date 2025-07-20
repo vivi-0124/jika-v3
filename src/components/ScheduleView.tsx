@@ -54,20 +54,10 @@ export default function ScheduleView() {
                     const scheduleItem = getLectureAtTime(day, period.id);
                     const lecture = scheduleItem?.lecture;
                     
-                    // 授業の色を決定（科目名に基づいて色分け）
-                    const getLectureColor = (subjectName: string) => {
-                      if (subjectName.includes('情報科学')) return 'border-l-4 border-l-gray-600';
-                      if (subjectName.includes('国際社会')) return 'border-l-4 border-l-pink-400';
-                      if (subjectName.includes('コンリテ')) return 'border-l-4 border-l-red-400';
-                      if (subjectName.includes('ゼミ')) return 'border-l-4 border-l-cyan-400';
-                      if (subjectName.includes('情報システム')) return 'border-l-4 border-l-purple-400';
-                      return 'border-l-4 border-l-indigo-400';
-                    };
-                    
                     return (
-                      <td key={`${day}-${period.id}`} className="px-2 py-2 text-sm">
+                      <td key={`${day}-${period.id}`} className="text-sm">
                         {lecture ? (
-                          <div className={`bg-black/90 backdrop-blur-sm rounded-lg p-2 h-32 ${getLectureColor(lecture.subjectName)}`}>
+                          <div className={`bg-black/90 backdrop-blur-sm rounded-lg p-2 h-32`}>
                             <div className="h-full flex flex-col justify-between">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
