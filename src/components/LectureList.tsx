@@ -37,8 +37,8 @@ interface LectureListProps {
 }
 
 export default function LectureList({ lectures, loading }: LectureListProps) {
-  const { userSchedule, addToSchedule, removeFromSchedule } = useUser();
-  const [addingLectures, setAddingLectures] = useState<Set<number>>(new Set());
+  const { userSchedule, addToSchedule, removeFromSchedule, isOperating } = useUser();
+  const [processingLectures, setProcessingLectures] = useState<Set<number>>(new Set());
 
   const getTargetText = (lecture: Lecture) => {
     if (lecture.targetCommon) return '共通科目';
@@ -64,9 +64,10 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
 
   // 授業を時間割に追加/削除
   const handleScheduleToggle = async (lectureId: number) => {
-    if (addingLectures.has(lectureId)) return; // 既に処理中
+    // 既に処理中、または全体的な操作中の場合は処理しない
+    if (processingLectures.has(lectureId) || isOperating) return;
 
-    setAddingLectures(prev => new Set(prev).add(lectureId));
+    setProcessingLectures(prev => new Set(prev).add(lectureId));
     
     try {
       if (isInSchedule(lectureId)) {
@@ -75,10 +76,10 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
         await addToSchedule(lectureId);
       }
     } catch (error) {
+      // エラーは既にUserContext内でtoastで表示されるため、ここでは何もしない
       console.error('時間割操作エラー:', error);
-      // エラーメッセージを表示する場合はここで実装
     } finally {
-      setAddingLectures(prev => {
+      setProcessingLectures(prev => {
         const newSet = new Set(prev);
         newSet.delete(lectureId);
         return newSet;
@@ -124,10 +125,16 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
       <div className="space-y-4">
         {lectures.map((lecture) => {
           const inSchedule = isInSchedule(lecture.id);
-          const isProcessing = addingLectures.has(lecture.id);
+          const isProcessing = processingLectures.has(lecture.id);
+          const isDisabled = isProcessing || isOperating;
           
           return (
-            <Card key={lecture.id} className="border-0 shadow-xl bg-black/20 backdrop-blur-md hover:shadow-2xl transition-all duration-300">
+            <Card 
+              key={lecture.id} 
+              className={`border-0 shadow-xl bg-black/20 backdrop-blur-md hover:shadow-2xl transition-all duration-300 ${
+                isProcessing ? 'opacity-75' : ''
+              }`}
+            >
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {/* ヘッダー */}
@@ -143,6 +150,11 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                           </Badge>
                         )}
                         {getRemoteClassIcon(lecture.isRemoteClass)}
+                        {inSchedule && (
+                          <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                            登録済み
+                          </Badge>
+                        )}
                       </div>
                       
                       <h3 className="text-base font-semibold text-white leading-tight">
@@ -190,16 +202,25 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                   
                   {/* アクションボタン */}
                   <div className="flex space-x-3">
-                    <Button variant="outline" size="sm" className="flex-1 bg-black/20 backdrop-blur-sm border-white/20 text-white hover:bg-white/10">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 bg-black/20 backdrop-blur-sm border-white/20 text-white hover:bg-white/10"
+                      disabled={isDisabled}
+                    >
                       <Eye className="h-4 w-4 mr-2" />
                       詳細
                     </Button>
                     <Button 
                       onClick={() => handleScheduleToggle(lecture.id)}
-                      disabled={isProcessing}
+                      disabled={isDisabled}
                       variant={inSchedule ? "destructive" : "default"}
                       size="sm"
-                      className="flex-1 shadow-lg"
+                      className={`flex-1 shadow-lg ${
+                        inSchedule 
+                          ? 'bg-red-600 hover:bg-red-700' 
+                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {isProcessing ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -208,7 +229,7 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
                       ) : (
                         <Plus className="h-4 w-4 mr-2" />
                       )}
-                      {inSchedule ? '削除' : '追加'}
+                      {isProcessing ? '処理中...' : inSchedule ? '削除' : '追加'}
                     </Button>
                   </div>
                 </div>
@@ -217,6 +238,20 @@ export default function LectureList({ lectures, loading }: LectureListProps) {
           );
         })}
       </div>
+      
+      {/* 全体的な操作中の表示 */}
+      {isOperating && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+          <Card className="border-0 shadow-xl bg-black/80 backdrop-blur-md">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+                <span className="text-white text-sm">時間割を更新中...</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

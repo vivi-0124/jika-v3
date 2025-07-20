@@ -5,6 +5,7 @@ import { UserProvider } from '@/contexts/UserContext'
 import { AuthProvider } from '@/contexts/AuthContext';
 import { StagewiseToolbar } from '@stagewise/toolbar-next';
 import ReactPlugin from '@stagewise-plugins/react';
+import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,12 @@ export default function RootLayout({
         <AuthProvider>
           <UserProvider>
             {children}
+            <Toaster 
+              position="top-center"
+              richColors
+              closeButton
+              theme="dark"
+            />
             <StagewiseToolbar
               config={{
                 plugins: [ReactPlugin],

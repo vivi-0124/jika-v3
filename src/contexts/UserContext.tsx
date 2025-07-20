@@ -3,6 +3,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { User } from '@supabase/supabase-js';
+import { 
+  getUserScheduleAction, 
+  addLectureToScheduleAction, 
+  removeLectureFromScheduleAction 
+} from '@/lib/actions/schedule-actions';
+import { toast } from 'sonner';
 
 interface Lecture {
   id: number;
@@ -43,6 +49,7 @@ interface UserContextType {
   refreshSchedule: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isOperating: boolean; // Server Action実行中のフラグ
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -51,6 +58,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [userSchedule, setUserSchedule] = useState<UserScheduleItem[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [isOperating, setIsOperating] = useState(false);
 
   // Supabase認証ユーザーのIDを使用
   const userId = user?.id || null;
@@ -64,17 +72,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setScheduleLoading(true);
     try {
-      const response = await fetch(`/api/schedule/user?userId=${userId}&term=前学期`);
-      if (response.ok) {
-        const data = await response.json();
-        setUserSchedule(data);
+      const result = await getUserScheduleAction(userId, '前学期');
+      
+      if (result.success) {
+        setUserSchedule((result.data as UserScheduleItem[]) || []);
       } else {
-        console.error('時間割の取得に失敗しました:', response.status);
+        console.error('時間割の取得に失敗しました:', result.error);
         setUserSchedule([]);
+        toast.error(result.error || '時間割の取得に失敗しました');
       }
     } catch (error) {
       console.error('時間割の取得に失敗しました:', error);
       setUserSchedule([]);
+      toast.error('時間割の取得中にエラーが発生しました');
     } finally {
       setScheduleLoading(false);
     }
@@ -82,57 +92,69 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const addToSchedule = async (lectureId: number) => {
     if (!userId) {
+      toast.error('ログインが必要です。先にログインしてください。');
       throw new Error('ログインが必要です。先にログインしてください。');
     }
 
     if (!isAuthenticated) {
+      toast.error('認証が必要です。先にログインしてください。');
       throw new Error('認証が必要です。先にログインしてください。');
     }
 
+    setIsOperating(true);
     try {
-      const response = await fetch('/api/schedule/user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, lectureId }),
-      });
-
-      if (response.ok) {
+      const result = await addLectureToScheduleAction(userId, lectureId);
+      
+      if (result.success) {
+        // 楽観的更新の代わりに時間割を再取得
         await refreshSchedule();
+        toast.success(result.message || '授業を時間割に追加しました');
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || '授業の追加に失敗しました');
+        console.error('授業追加エラー:', result.error);
+        toast.error(result.error || '授業の追加に失敗しました');
+        throw new Error(result.error || '授業の追加に失敗しました');
       }
     } catch (error) {
       console.error('授業追加エラー:', error);
+      const errorMessage = error instanceof Error ? error.message : '授業の追加に失敗しました';
+      toast.error(errorMessage);
       throw error;
+    } finally {
+      setIsOperating(false);
     }
   };
 
   const removeFromSchedule = async (lectureId: number) => {
     if (!userId) {
+      toast.error('ログインが必要です。先にログインしてください。');
       throw new Error('ログインが必要です。先にログインしてください。');
     }
 
     if (!isAuthenticated) {
+      toast.error('認証が必要です。先にログインしてください。');
       throw new Error('認証が必要です。先にログインしてください。');
     }
 
+    setIsOperating(true);
     try {
-      const response = await fetch(`/api/schedule/user?userId=${userId}&lectureId=${lectureId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
+      const result = await removeLectureFromScheduleAction(userId, lectureId);
+      
+      if (result.success) {
+        // 楽観的更新の代わりに時間割を再取得
         await refreshSchedule();
+        toast.success(result.message || '授業を時間割から削除しました');
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || '授業の削除に失敗しました');
+        console.error('授業削除エラー:', result.error);
+        toast.error(result.error || '授業の削除に失敗しました');
+        throw new Error(result.error || '授業の削除に失敗しました');
       }
     } catch (error) {
       console.error('授業削除エラー:', error);
+      const errorMessage = error instanceof Error ? error.message : '授業の削除に失敗しました';
+      toast.error(errorMessage);
       throw error;
+    } finally {
+      setIsOperating(false);
     }
   };
 
@@ -169,6 +191,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         refreshSchedule,
         isAuthenticated,
         isLoading: authLoading || scheduleLoading,
+        isOperating, // Server Action実行中のフラグを追加
       }}
     >
       {children}

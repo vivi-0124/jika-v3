@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { searchLecturesAction, type SearchParams } from '@/lib/actions/lecture-actions';
+import { toast } from 'sonner';
 
 interface LectureSearchProps {
   onSearch: (results: Lecture[]) => void;
+  onSearchStateChange?: (isSearching: boolean) => void;
 }
 
 interface Lecture {
@@ -35,7 +38,7 @@ interface Lecture {
   instructorName: string;
 }
 
-export default function LectureSearch({ onSearch }: LectureSearchProps) {
+export default function LectureSearch({ onSearch, onSearchStateChange }: LectureSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     dayOfWeek: 'all',
@@ -44,29 +47,39 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
     target: 'all'
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleSearch = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('query', searchQuery);
-      if (filters.dayOfWeek && filters.dayOfWeek !== 'all') params.append('dayOfWeek', filters.dayOfWeek);
-      if (filters.period && filters.period !== 'all') params.append('period', filters.period);
-      if (filters.term) params.append('term', filters.term);
-      if (filters.target && filters.target !== 'all') params.append('target', filters.target);
+    const searchParams: SearchParams = {
+      query: searchQuery,
+      dayOfWeek: filters.dayOfWeek,
+      period: filters.period,
+      term: filters.term,
+      target: filters.target
+    };
 
-      const response = await fetch(`/api/lectures?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    startTransition(async () => {
+      onSearchStateChange?.(true);
+      
+      try {
+        const result = await searchLecturesAction(searchParams);
+        
+        if (result.success) {
+          onSearch((result.data as Lecture[]) || []);
+          toast.success(result.message || '検索が完了しました');
+        } else {
+          console.error('検索エラー:', result.error);
+          toast.error(result.error || '検索に失敗しました');
+          onSearch([]);
+        }
+      } catch (error) {
+        console.error('検索エラー:', error);
+        toast.error('検索中にエラーが発生しました');
+        onSearch([]);
+      } finally {
+        onSearchStateChange?.(false);
       }
-      const data = await response.json();
-      onSearch(data);
-    } catch (error) {
-      console.error('検索エラー:', error);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const clearFilters = () => {
@@ -97,7 +110,8 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-3 border-white/20 focus:border-indigo-400 focus:ring-indigo-400 bg-black/20 backdrop-blur-sm text-white placeholder:text-white/60"
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              onKeyPress={(e) => e.key === 'Enter' && !isPending && handleSearch()}
+              disabled={isPending}
             />
           </div>
           
@@ -107,6 +121,7 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
               variant="outline"
               size="sm"
               className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm border-white/20 text-white hover:bg-white/10"
+              disabled={isPending}
             >
               <Filter className="h-4 w-4" />
               <span>フィルター</span>
@@ -119,10 +134,10 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
             </Button>
             <Button
               onClick={handleSearch}
-              disabled={loading}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+              disabled={isPending}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg disabled:opacity-50"
             >
-              {loading ? '検索中...' : '検索'}
+              {isPending ? '検索中...' : '検索'}
             </Button>
           </div>
         </div>
@@ -133,7 +148,11 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">曜日</label>
-                <Select value={filters.dayOfWeek} onValueChange={(value) => setFilters({ ...filters, dayOfWeek: value })}>
+                <Select 
+                  value={filters.dayOfWeek} 
+                  onValueChange={(value) => setFilters({ ...filters, dayOfWeek: value })}
+                  disabled={isPending}
+                >
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
@@ -151,7 +170,11 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">時限</label>
-                <Select value={filters.period} onValueChange={(value) => setFilters({ ...filters, period: value })}>
+                <Select 
+                  value={filters.period} 
+                  onValueChange={(value) => setFilters({ ...filters, period: value })}
+                  disabled={isPending}
+                >
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
@@ -169,7 +192,11 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">学期</label>
-                <Select value={filters.term} onValueChange={(value) => setFilters({ ...filters, term: value })}>
+                <Select 
+                  value={filters.term} 
+                  onValueChange={(value) => setFilters({ ...filters, term: value })}
+                  disabled={isPending}
+                >
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -182,7 +209,11 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">対象学科</label>
-                <Select value={filters.target} onValueChange={(value) => setFilters({ ...filters, target: value })}>
+                <Select 
+                  value={filters.target} 
+                  onValueChange={(value) => setFilters({ ...filters, target: value })}
+                  disabled={isPending}
+                >
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
@@ -207,6 +238,7 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
                 variant="ghost"
                 size="sm"
                 className="flex items-center space-x-1 text-white/60 hover:text-white"
+                disabled={isPending}
               >
                 <X className="h-3 w-3" />
                 <span>フィルターをクリア</span>

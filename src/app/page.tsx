@@ -14,6 +14,7 @@ import AuthGuard from '@/components/AuthGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 
+
 interface Lecture {
   id: number;
   term: string;
@@ -40,6 +41,7 @@ interface Lecture {
 
 export default function HomePage() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { signOut } = useAuth();
   const { user, isAuthenticated, isLoading: userLoading } = useUser();
 
@@ -73,69 +75,69 @@ export default function HomePage() {
         {/* ヘッダー */}
         <header className="bg-transparent backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
           <div className="container mx-auto px-6 py-2">
-                        <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Select defaultValue="3年前期">
-                    <SelectTrigger className="w-32 bg-black/20 backdrop-blur-sm border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-white/20">
-                      <SelectItem value="1年前期">1年前期</SelectItem>
-                      <SelectItem value="1年後期">1年後期</SelectItem>
-                      <SelectItem value="2年前期">2年前期</SelectItem>
-                      <SelectItem value="2年後期">2年後期</SelectItem>
-                      <SelectItem value="3年前期">3年前期</SelectItem>
-                      <SelectItem value="3年後期">3年後期</SelectItem>
-                      <SelectItem value="4年前期">4年前期</SelectItem>
-                      <SelectItem value="4年後期">4年後期</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">
-                      2024年度 3年前期
-                    </h1>
-                    <div className="mt-1 px-3 py-1 bg-gray-800/50 rounded-full">
-                      <span className="text-xs text-white/80">合計 18単位</span>
-                    </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Select defaultValue="3年前期">
+                  <SelectTrigger className="w-32 bg-black/20 backdrop-blur-sm border-white/20 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-white/20">
+                    <SelectItem value="1年前期">1年前期</SelectItem>
+                    <SelectItem value="1年後期">1年後期</SelectItem>
+                    <SelectItem value="2年前期">2年前期</SelectItem>
+                    <SelectItem value="2年後期">2年後期</SelectItem>
+                    <SelectItem value="3年前期">3年前期</SelectItem>
+                    <SelectItem value="3年後期">3年後期</SelectItem>
+                    <SelectItem value="4年前期">4年前期</SelectItem>
+                    <SelectItem value="4年後期">4年後期</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div>
+                  <h1 className="text-xl font-bold text-white tracking-tight">
+                    2024年度 3年前期
+                  </h1>
+                  <div className="mt-1 px-3 py-1 bg-gray-800/50 rounded-full">
+                    <span className="text-xs text-white/80">合計 18単位</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                    <Moon className="h-4 w-4" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                        <User className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-white/20">
-                      <div className="px-3 py-2">
-                        <p className="text-sm text-white">
-                          {isAuthenticated ? 'ログイン中' : '認証中...'}
-                        </p>
-                        <p className="text-xs text-white/60 truncate">
-                          {user?.email || '読み込み中...'}
-                        </p>
-                        {userLoading && (
-                          <p className="text-xs text-white/40 mt-1">データ読み込み中...</p>
-                        )}
-                      </div>
-                      <DropdownMenuSeparator className="bg-white/20" />
-                      <DropdownMenuItem 
-                        onClick={handleSignOut}
-                        className="text-white hover:bg-white/10 focus:bg-white/10"
-                        disabled={!isAuthenticated}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        ログアウト
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
               </div>
+              <div className="flex items-center space-x-3">
+                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                  <Moon className="h-4 w-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-white/20">
+                    <div className="px-3 py-2">
+                      <p className="text-sm text-white">
+                        {isAuthenticated ? 'ログイン中' : '認証中...'}
+                      </p>
+                      <p className="text-xs text-white/60 truncate">
+                        {user?.email || '読み込み中...'}
+                      </p>
+                      {userLoading && (
+                        <p className="text-xs text-white/40 mt-1">データ読み込み中...</p>
+                      )}
+                    </div>
+                    <DropdownMenuSeparator className="bg-white/20" />
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="text-white hover:bg-white/10 focus:bg-white/10"
+                      disabled={!isAuthenticated}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      ログアウト
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -145,20 +147,26 @@ export default function HomePage() {
             <CardContent className="p-0">
               {/* 時間割機能 */}
               {activeBottomTab === 'schedule' && (
-                  <ScheduleView />
+                <ScheduleView />
               )}
 
               {/* 検索機能 */}
               {activeBottomTab === 'search' && (
                 <div className="space-y-6">
-                  <LectureSearch onSearch={(results) => setLectures(results)} />
-                  <LectureList lectures={lectures} loading={false} />
+                  <LectureSearch 
+                    onSearch={(results) => setLectures(results)} 
+                    onSearchStateChange={setIsSearching}
+                  />
+                  <LectureList 
+                    lectures={lectures} 
+                    loading={isSearching} 
+                  />
                 </div>
               )}
 
               {/* 共有機能 */}
               {activeBottomTab === 'share' && (
-                <div className="space-y-6">
+                <div className="space-y-6 p-6">
                   <div className="flex items-center space-x-2 mb-4">
                     <Share className="h-5 w-5 text-white" />
                     <h2 className="text-xl font-bold text-white">共有</h2>
@@ -173,7 +181,7 @@ export default function HomePage() {
 
               {/* やること機能 */}
               {activeBottomTab === 'todo' && (
-                <div className="space-y-6">
+                <div className="space-y-6 p-6">
                   <div className="flex items-center space-x-2 mb-4">
                     <CheckSquare className="h-5 w-5 text-white" />
                     <h2 className="text-xl font-bold text-white">やること</h2>
@@ -228,6 +236,8 @@ export default function HomePage() {
             </div>
           </div>
         </footer>
+
+
       </div>
     </AuthGuard>
   );
