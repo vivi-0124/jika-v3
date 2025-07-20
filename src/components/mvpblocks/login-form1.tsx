@@ -1,32 +1,133 @@
 'use client';
 import { Github, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginForm1() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  const { signIn, signUp, signInWithGoogle, signInWithGithub } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URLパラメータからエラーメッセージを取得
+  const urlError = searchParams.get('error');
+  if (urlError && !error) {
+    setError('認証に失敗しました。もう一度お試しください。');
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { error: authError } = isSignUp 
+        ? await signUp(email, password)
+        : await signIn(email, password);
+
+      if (authError) {
+        // エラーメッセージを日本語に変換
+        const errorMessage = getJapaneseErrorMessage(authError.message);
+        setError(errorMessage);
+      } else {
+        if (isSignUp) {
+          setError('');
+          alert('確認メールを送信しました。メールを確認してアカウントを有効化してください。');
+        } else {
+          router.push('/');
+        }
+      }
+    } catch (err) {
+      setError('予期しないエラーが発生しました。');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setError(getJapaneseErrorMessage(error.message));
+      setIsLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error } = await signInWithGithub();
+    if (error) {
+      setError(getJapaneseErrorMessage(error.message));
+      setIsLoading(false);
+    }
+  };
+
+  const getJapaneseErrorMessage = (errorMessage: string): string => {
+    if (errorMessage.includes('Invalid login credentials')) {
+      return 'メールアドレスまたはパスワードが間違っています。';
+    }
+    if (errorMessage.includes('Email not confirmed')) {
+      return 'メールアドレスが確認されていません。確認メールをご確認ください。';
+    }
+    if (errorMessage.includes('Password should be at least 6 characters')) {
+      return 'パスワードは6文字以上で入力してください。';
+    }
+    if (errorMessage.includes('User already registered')) {
+      return 'このメールアドレスは既に登録されています。';
+    }
+    if (errorMessage.includes('Invalid email')) {
+      return '有効なメールアドレスを入力してください。';
+    }
+    return errorMessage;
+  };
+
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background sm:px-4">
       <div className="w-full space-y-4 sm:max-w-md">
         <div className="text-center">
-          <img src="/logo.webp" width={80} className="mx-auto" />
           <div className="mt-5 space-y-2">
             <h3 className="text-2xl font-bold sm:text-3xl">
-              Log in to your account
+              {isSignUp ? 'アカウントを作成' : 'アカウントにログイン'}
             </h3>
             <p className="">
-              Don&apos;t have an account?{' '}
-              <a
-                href="#"
+              {isSignUp ? '既にアカウントをお持ちですか？' : 'アカウントをお持ちでないですか？'}{' '}
+              <button
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError('');
+                }}
                 className="font-medium text-rose-600 hover:text-rose-500"
+                disabled={isLoading}
               >
-                Sign up
-              </a>
+                {isSignUp ? 'ログイン' : 'サインアップ'}
+              </button>
             </p>
           </div>
         </div>
-        <div className="space-y-6 p-4 py-6 shadow sm:rounded-lg sm:p-6">
-          <div className="grid grid-cols-3 gap-x-3">
-            <button className="flex items-center justify-center rounded-lg border py-2.5 duration-150 hover:bg-secondary active:bg-secondary/40">
+
+        <div className="space-y-6 p-4 py-6 shadow sm:rounded-lg sm:p-6 border">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid grid-cols-2 gap-x-3">
+            <button 
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="flex items-center justify-center rounded-lg border py-2.5 duration-150 hover:bg-secondary active:bg-secondary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <svg
                 className="h-5 w-5"
                 viewBox="0 0 48 48"
@@ -58,66 +159,88 @@ export default function LoginForm1() {
                 </defs>
               </svg>
             </button>
-            <button className="flex items-center justify-center rounded-lg border py-2.5 duration-150 hover:bg-secondary active:bg-secondary/40">
-              <svg
-                className="h-5 w-5"
-                viewBox="0 0 48 48"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M15.095 43.5014C33.2083 43.5014 43.1155 28.4946 43.1155 15.4809C43.1155 15.0546 43.1155 14.6303 43.0867 14.2079C45.0141 12.8138 46.6778 11.0877 48 9.11033C46.2028 9.90713 44.2961 10.4294 42.3437 10.6598C44.3996 9.42915 45.9383 7.49333 46.6733 5.21273C44.7402 6.35994 42.6253 7.16838 40.4198 7.60313C38.935 6.02428 36.9712 4.97881 34.8324 4.6285C32.6935 4.27818 30.4988 4.64256 28.5879 5.66523C26.677 6.68791 25.1564 8.31187 24.2615 10.2858C23.3665 12.2598 23.1471 14.4737 23.6371 16.5849C19.7218 16.3885 15.8915 15.371 12.3949 13.5983C8.89831 11.8257 5.81353 9.33765 3.3408 6.29561C2.08146 8.4636 1.69574 11.0301 2.2622 13.4725C2.82865 15.9148 4.30468 18.0495 6.38976 19.4418C4.82246 19.3959 3.2893 18.9731 1.92 18.2092V18.334C1.92062 20.6077 2.7077 22.8112 4.14774 24.5707C5.58778 26.3303 7.59212 27.5375 9.8208 27.9878C8.37096 28.3832 6.84975 28.441 5.37408 28.1567C6.00363 30.1134 7.22886 31.8244 8.87848 33.0506C10.5281 34.2768 12.5197 34.9569 14.5747 34.9958C12.5329 36.6007 10.1946 37.7873 7.69375 38.4878C5.19287 39.1882 2.57843 39.3886 0 39.0777C4.50367 41.9677 9.74385 43.5007 15.095 43.4937"
-                  fill="#1DA1F2"
-                />
-              </svg>
-            </button>
-            <button className="flex items-center justify-center rounded-lg border py-2.5 duration-150 hover:bg-secondary active:bg-secondary/40">
+            <button 
+              onClick={handleGithubSignIn}
+              disabled={isLoading}
+              className="flex items-center justify-center rounded-lg border py-2.5 duration-150 hover:bg-secondary active:bg-secondary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Github size={24} />
             </button>
           </div>
           <div className="relative">
             <span className="block h-px w-full bg-secondary"></span>
-            <p className="absolute inset-x-0 -top-2 mx-auto inline-block w-fit px-2 text-sm">
-              Or continue with
+            <p className="absolute inset-x-0 -top-2 mx-auto inline-block w-fit px-2 text-sm bg-background">
+              または
             </p>
           </div>
-          {/* OnSubmit declare yourself */}
-          <form className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="font-medium">Email</label>
+              <label htmlFor="email" className="font-medium">メールアドレス</label>
               <input
+                id="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-2 w-full rounded-lg border bg-transparent px-3 py-2 shadow-sm outline-none focus:border-rose-600"
+                disabled={isLoading}
+                className="mt-2 w-full rounded-lg border bg-transparent px-3 py-2 shadow-sm outline-none focus:border-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="example@email.com"
               />
             </div>
             <div className="relative">
-              <label className="font-medium">Password</label>
+              <label htmlFor="password" className="font-medium">パスワード</label>
               <div className="relative">
                 <input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="mt-2 w-full rounded-lg border bg-transparent px-3 py-2 shadow-sm outline-none focus:border-rose-600"
+                  disabled={isLoading}
+                  className="mt-2 w-full rounded-lg border bg-transparent px-3 py-2 pr-10 shadow-sm outline-none focus:border-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder={isSignUp ? "6文字以上のパスワード" : "パスワードを入力"}
+                  minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 mr-3 mt-2 flex items-center"
+                  disabled={isLoading}
+                  className="absolute inset-y-0 right-0 mr-3 mt-2 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {showPassword ? ( <EyeOff size={20} className="text-secondary" /> ) : ( <Eye size={20} className="text-secondary" />)}
+                  {showPassword ? ( 
+                    <EyeOff size={20} className="text-secondary" /> 
+                  ) : ( 
+                    <Eye size={20} className="text-secondary" />
+                  )}
                 </button>
               </div>
+              {isSignUp && (
+                <p className="mt-1 text-xs text-gray-500">
+                  パスワードは6文字以上で入力してください
+                </p>
+              )}
             </div>
-            <button className="w-full rounded-lg bg-rose-600 px-4 py-2 font-medium text-white duration-150 hover:bg-rose-500 active:bg-rose-600">
-              Sign in
+            <button 
+              type="submit"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-rose-600 px-4 py-2 font-medium text-white duration-150 hover:bg-rose-500 active:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? '処理中...' : (isSignUp ? 'アカウントを作成' : 'ログイン')}
             </button>
           </form>
         </div>
-        <div className="text-center">
-          <a href="#" className="hover:text-rose-600">
-            Forgot password?
-          </a>
-        </div>
+        
+        {!isSignUp && (
+          <div className="text-center">
+            <button 
+              onClick={() => router.push('/forgot-password')}
+              className="hover:text-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              パスワードを忘れた場合
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );
