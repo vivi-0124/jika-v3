@@ -150,7 +150,7 @@ const Header = ({
                 className="text-white hover:bg-white/10 hover:text-white"
               >
                 <User className="mr-2 h-4 w-4" />
-                プロフィール編集
+                プロフィール
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-white/20" />
               <DropdownMenuItem 

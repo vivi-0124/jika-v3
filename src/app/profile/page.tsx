@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { ArrowLeft, Save, User, Mail, Calendar } from 'lucide-react';
+import { ArrowLeft, User, Mail, Calendar, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,19 +14,6 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user } = useUser();
   const { signOut } = useAuth();
-  
-  const [formData, setFormData] = useState({
-    name: user?.user_metadata?.name || '',
-    email: user?.email || '',
-    grade: user?.user_metadata?.grade || '3年前期',
-    department: user?.user_metadata?.department || '国際文化学部',
-  });
-
-  const handleSave = async () => {
-    // TODO: プロフィール更新の実装
-    console.log('プロフィールを更新:', formData);
-    router.push('/');
-  };
 
   const handleSignOut = async () => {
     try {
@@ -66,15 +50,8 @@ export default function ProfilePage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 戻る
               </Button>
-              <h1 className="text-xl font-bold text-white">プロフィール編集</h1>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSave}
-                className="text-white/80 hover:text-white hover:bg-white/10"
-              >
-                <Save className="h-4 w-4" />
-              </Button>
+              <h1 className="text-xl font-bold text-white">プロフィール</h1>
+              <div className="w-10"></div>
             </div>
           </div>
         </header>
@@ -92,71 +69,40 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-white">名前</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="bg-black/20 border-white/20 text-white placeholder:text-white/50"
-                    placeholder="名前を入力"
-                  />
+                  <Label className="text-white/60 text-sm">名前</Label>
+                  <div className="bg-black/20 border border-white/20 rounded-md px-3 py-2 text-white">
+                    {user?.user_metadata?.name || '未設定'}
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white flex items-center">
+                  <Label className="text-white/60 text-sm flex items-center">
                     <Mail className="h-4 w-4 mr-1" />
                     メールアドレス
                   </Label>
-                  <Input
-                    id="email"
-                    value={formData.email}
-                    disabled
-                    className="bg-black/20 border-white/20 text-white/60"
-                  />
+                  <div className="bg-black/20 border border-white/20 rounded-md px-3 py-2 text-white">
+                    {user?.email || '未設定'}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="grade" className="text-white flex items-center">
+                  <Label className="text-white/60 text-sm flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
                     学年・学期
                   </Label>
-                  <Select
-                    value={formData.grade}
-                    onValueChange={(value) => setFormData({ ...formData, grade: value })}
-                  >
-                    <SelectTrigger className="bg-black/20 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black border-white/20 text-white">
-                      <SelectItem value="1年前期">1年前期</SelectItem>
-                      <SelectItem value="1年後期">1年後期</SelectItem>
-                      <SelectItem value="2年前期">2年前期</SelectItem>
-                      <SelectItem value="2年後期">2年後期</SelectItem>
-                      <SelectItem value="3年前期">3年前期</SelectItem>
-                      <SelectItem value="3年後期">3年後期</SelectItem>
-                      <SelectItem value="4年前期">4年前期</SelectItem>
-                      <SelectItem value="4年後期">4年後期</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="bg-black/20 border border-white/20 rounded-md px-3 py-2 text-white">
+                    {user?.user_metadata?.grade || '未設定'}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="department" className="text-white">学部</Label>
-                  <Select
-                    value={formData.department}
-                    onValueChange={(value) => setFormData({ ...formData, department: value })}
-                  >
-                    <SelectTrigger className="bg-black/20 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black border-white/20 text-white">
-                      <SelectItem value="国際文化学部">国際文化学部</SelectItem>
-                      <SelectItem value="国際観光学部">国際観光学部</SelectItem>
-                      <SelectItem value="スポーツ健康学部">スポーツ健康学部</SelectItem>
-                      <SelectItem value="看護学部">看護学部</SelectItem>
-                      <SelectItem value="健康情報学部">健康情報学部</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-white/60 text-sm flex items-center">
+                    <Building className="h-4 w-4 mr-1" />
+                    学部
+                  </Label>
+                  <div className="bg-black/20 border border-white/20 rounded-md px-3 py-2 text-white">
+                    {user?.user_metadata?.department || '未設定'}
+                  </div>
                 </div>
               </CardContent>
             </Card>
