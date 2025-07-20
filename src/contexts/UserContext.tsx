@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { User } from '@supabase/supabase-js';
 
 interface Lecture {
   id: number;
@@ -35,7 +36,7 @@ interface UserScheduleItem {
 
 interface UserContextType {
   userId: string | null;
-  user: any | null; // AuthContextから取得したユーザー情報
+  user: User | null; // AuthContextから取得したユーザー情報
   userSchedule: UserScheduleItem[];
   addToSchedule: (lectureId: number) => Promise<void>;
   removeFromSchedule: (lectureId: number) => Promise<void>;
@@ -55,7 +56,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const userId = user?.id || null;
   const isAuthenticated = !!user && !authLoading;
 
-  const refreshSchedule = async () => {
+  const refreshSchedule = useCallback(async () => {
     if (!userId) {
       setUserSchedule([]);
       return;
@@ -77,7 +78,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setScheduleLoading(false);
     }
-  };
+  }, [userId]);
 
   const addToSchedule = async (lectureId: number) => {
     if (!userId) {
@@ -145,7 +146,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUserSchedule([]);
       }
     }
-  }, [userId, authLoading, isAuthenticated]);
+  }, [userId, authLoading, isAuthenticated, refreshSchedule]);
 
   // デバッグ用：認証状態の変更をログ出力
   useEffect(() => {
