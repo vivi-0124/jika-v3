@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('データベース関数のE2Eテスト（Server Actions）', () => {
+test.describe('データベース関数のE2Eテスト（API Routes）', () => {
   test.beforeEach(async ({ page }) => {
     // ログインページに移動
     await page.goto('/login');

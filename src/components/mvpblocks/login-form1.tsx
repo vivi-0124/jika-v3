@@ -1,6 +1,6 @@
 'use client';
 import { Eye, EyeOff, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -26,10 +26,12 @@ export default function LoginForm1() {
   const searchParams = useSearchParams();
 
   // URLパラメータからエラーメッセージを取得
-  const urlError = searchParams.get('error');
-  if (urlError && !error) {
-    setError('認証に失敗しました。もう一度お試しください。');
-  }
+  useEffect(() => {
+    const urlError = searchParams.get('error');
+    if (urlError && !error) {
+      setError('認証に失敗しました。もう一度お試しください。');
+    }
+  }, [searchParams, error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +121,7 @@ export default function LoginForm1() {
       </div>
       
       <div className="w-full space-y-4 sm:max-w-md relative z-10">
-        <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md">
+        <Card className="border-0 shadow-2xl">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold sm:text-3xl text-white">
               {isSignUp ? 'アカウントを作成' : 'アカウントにログイン'}

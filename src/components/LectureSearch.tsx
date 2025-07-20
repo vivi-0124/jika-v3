@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { searchLecturesAction, type SearchParams } from '@/lib/actions/lecture-actions';
+import { searchLecturesAPI, type SearchParams } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface LectureSearchProps {
@@ -62,7 +62,7 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
       onSearchStateChange?.(true);
       
       try {
-        const result = await searchLecturesAction(searchParams);
+        const result = await searchLecturesAPI(searchParams);
         
         if (result.success) {
           onSearch((result.data as Lecture[]) || []);
