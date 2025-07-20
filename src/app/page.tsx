@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Calendar, User, Share, CheckSquare, Moon, LogOut } from 'lucide-react';
 import LectureSearch from '@/components/LectureSearch';
 import ScheduleView from '@/components/ScheduleView';
@@ -40,13 +41,23 @@ interface Lecture {
 
 
 export default function HomePage() {
+  const router = useRouter();
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { signOut } = useAuth();
-  const { user, isAuthenticated, isLoading: userLoading } = useUser();
+  const { user, isAuthenticated, isLoading: userLoading, userSchedule } = useUser();
 
   // ボトムバーのアクティブ状態を管理
   const [activeBottomTab, setActiveBottomTab] = useState<'schedule' | 'search' | 'share' | 'todo'>('schedule');
+  
+  // 選択された学年・学期を管理
+  const [selectedGrade, setSelectedGrade] = useState('3年前期');
+  
+  // 現在の年度を取得
+  const currentYear = new Date().getFullYear();
+  
+  // 単位数を計算
+  const totalCredits = userSchedule.reduce((total, item) => total + (item.lecture.credits || 0), 0);
 
   const handleSignOut = async () => {
     try {
@@ -74,46 +85,97 @@ export default function HomePage() {
 
         {/* ヘッダー */}
         <header className="bg-transparent backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
-          <div className="container mx-auto px-6 py-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Select defaultValue="3年前期">
-                  <SelectTrigger className="w-32 bg-black/20 backdrop-blur-sm border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-white/20">
-                    <SelectItem value="1年前期">1年前期</SelectItem>
-                    <SelectItem value="1年後期">1年後期</SelectItem>
-                    <SelectItem value="2年前期">2年前期</SelectItem>
-                    <SelectItem value="2年後期">2年後期</SelectItem>
-                    <SelectItem value="3年前期">3年前期</SelectItem>
-                    <SelectItem value="3年後期">3年後期</SelectItem>
-                    <SelectItem value="4年前期">4年前期</SelectItem>
-                    <SelectItem value="4年後期">4年後期</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div>
-                  <h1 className="text-xl font-bold text-white tracking-tight">
-                    2024年度 3年前期
-                  </h1>
-                  <div className="mt-1 px-3 py-1 bg-gray-800/50 rounded-full">
-                    <span className="text-xs text-white/80">合計 18単位</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                  <Moon className="h-4 w-4" />
-                </Button>
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-white/80 hover:text-white hover:bg-white/10 h-10 w-10 p-0"
+                    >
+                      <Calendar className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48 bg-black border-white/20">
+                    <div className="px-3 py-2">
+                      <p className="text-sm text-white font-medium">学年・学期を選択</p>
+                    </div>
+                    <DropdownMenuSeparator className="bg-white/20" />
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('1年前期')}
+                    >
+                      1年前期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('1年後期')}
+                    >
+                      1年後期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('2年前期')}
+                    >
+                      2年前期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('2年後期')}
+                    >
+                      2年後期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('3年前期')}
+                    >
+                      3年前期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('3年後期')}
+                    >
+                      3年後期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('4年前期')}
+                    >
+                      4年前期
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setSelectedGrade('4年後期')}
+                    >
+                      4年後期
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="absolute left-1/2 transform -translate-x-1/2">
+                <div className="text-center">
+                  <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                    {currentYear}年度 {selectedGrade}
+                  </h1>
+                  <span className="text-xs text-white/80">合計 {totalCredits}単位</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-white/80 hover:text-white hover:bg-white/10 h-10 w-10 p-0"
+                    >
                       <User className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-white/20">
+                  <DropdownMenuContent align="end" className="w-56 bg-black border-white/20 text-white">
                     <div className="px-3 py-2">
                       <p className="text-sm text-white">
                         {isAuthenticated ? 'ログイン中' : '認証中...'}
@@ -127,8 +189,16 @@ export default function HomePage() {
                     </div>
                     <DropdownMenuSeparator className="bg-white/20" />
                     <DropdownMenuItem 
+                      onClick={() => router.push('/profile')}
+                      className="text-white hover:bg-white/10 hover:text-white"
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      プロフィール編集
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-white/20" />
+                    <DropdownMenuItem 
                       onClick={handleSignOut}
-                      className="text-white hover:bg-white/10 focus:bg-white/10"
+                      className="text-white hover:bg-white/10 hover:text-white"
                       disabled={!isAuthenticated}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -143,7 +213,7 @@ export default function HomePage() {
 
         {/* メインコンテンツ */}
         <main className="flex-1 container mx-auto relative z-10">
-          <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md">
+          <Card className="border-0 shadow-2xl bg-transparent backdrop-blur-md">
             <CardContent className="p-0">
               {/* 時間割機能 */}
               {activeBottomTab === 'schedule' && (

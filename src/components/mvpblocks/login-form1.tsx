@@ -121,7 +121,7 @@ export default function LoginForm1() {
       </div>
       
       <div className="w-full space-y-4 sm:max-w-md relative z-10">
-        <Card className="border-0 shadow-2xl">
+        <Card className="border-0 shadow-2xl bg-transparent">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold sm:text-3xl text-white">
               {isSignUp ? 'アカウントを作成' : 'アカウントにログイン'}
