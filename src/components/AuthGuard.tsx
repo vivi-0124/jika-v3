@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -12,34 +12,59 @@ interface AuthGuardProps {
 export default function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRedirecting) {
       if (requireAuth && !user) {
-        router.push('/login');
+        setIsRedirecting(true);
+        // 少し遅延を入れてリダイレクトを実行
+        setTimeout(() => {
+          router.push('/login');
+        }, 100);
       } else if (!requireAuth && user) {
-        router.push('/');
+        setIsRedirecting(true);
+        // 少し遅延を入れてリダイレクトを実行
+        setTimeout(() => {
+          router.push('/');
+        }, 100);
       }
     }
-  }, [user, loading, requireAuth, router]);
+  }, [user, loading, requireAuth, router, isRedirecting]);
 
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto"></div>
-          <p className="mt-4 text-lg">読み込み中...</p>
+          <p className="mt-4 text-lg">
+            {isRedirecting ? 'リダイレクト中...' : '読み込み中...'}
+          </p>
         </div>
       </div>
     );
   }
 
   if (requireAuth && !user) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto"></div>
+          <p className="mt-4 text-lg">ログインページに移動中...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!requireAuth && user) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto"></div>
+          <p className="mt-4 text-lg">ホームページに移動中...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

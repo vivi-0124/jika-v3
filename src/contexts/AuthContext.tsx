@@ -12,7 +12,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
-  signInWithGithub: () => Promise<{ error: AuthError | null }>;
+  signInAnonymously: () => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,7 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('ログアウトエラー:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('ログアウト処理中にエラーが発生しました:', error);
+      throw error;
+    }
   };
 
   const signInWithGoogle = async () => {
@@ -75,13 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signInWithGithub = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+  const signInAnonymously = async () => {
+    const { error } = await supabase.auth.signInAnonymously();
     return { error };
   };
 
@@ -95,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signOut,
         signInWithGoogle,
-        signInWithGithub,
+        signInAnonymously,
       }}
     >
       {children}

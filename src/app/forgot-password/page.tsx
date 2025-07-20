@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AuthGuard from '@/components/AuthGuard';
+import Aurora from '@/components/blocks/backgrounds/Aurora/Aurora';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -50,9 +51,19 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthGuard requireAuth={false}>
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background sm:px-4">
-        <div className="w-full space-y-4 sm:max-w-md">
-          <Card>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center relative overflow-hidden">
+        {/* オーロラ背景 */}
+        <div className="fixed inset-0 z-0 bg-black">
+          <Aurora
+            colorStops={["#000066", "#eb6d9a", "#000066"]}
+            amplitude={1.0}
+            blend={0.5}
+            speed={1.0}
+          />
+        </div>
+        
+        <div className="w-full space-y-4 sm:max-w-md relative z-10">
+          <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md">
             <CardHeader className="space-y-1">
               <div className="flex items-center space-x-2">
                 <Button
@@ -61,11 +72,11 @@ export default function ForgotPasswordPage() {
                   onClick={() => router.push('/login')}
                   className="p-0 h-auto"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4 text-white" />
                 </Button>
-                <CardTitle className="text-2xl">パスワードをリセット</CardTitle>
+                <CardTitle className="text-2xl text-white">パスワードをリセット</CardTitle>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/80">
                 登録済みのメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。
               </p>
             </CardHeader>
@@ -85,7 +96,7 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">メールアドレス</Label>
+                  <Label className="text-white" htmlFor="email">メールアドレス</Label>
                   <Input
                     id="email"
                     type="email"
@@ -110,7 +121,7 @@ export default function ForgotPasswordPage() {
                   variant="link"
                   onClick={() => router.push('/login')}
                   disabled={isLoading}
-                  className="text-sm"
+                  className="text-sm text-white/80"
                 >
                   ログインページに戻る
                 </Button>

@@ -49,8 +49,11 @@ export default function HomePage() {
   const handleSignOut = async () => {
     try {
       await signOut();
+      // ログアウト成功後は自動的にログインページにリダイレクトされる
     } catch (error) {
       console.error('ログアウトエラー:', error);
+      // エラーが発生した場合でも、強制的にログインページに移動
+      window.location.href = '/login';
     }
   };
 

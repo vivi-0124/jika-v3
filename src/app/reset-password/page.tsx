@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import AuthGuard from '@/components/AuthGuard';
+import Aurora from '@/components/blocks/backgrounds/Aurora/Aurora';
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState('');
@@ -114,11 +116,23 @@ function ResetPasswordContent() {
   if (isProcessing) {
     return (
       <AuthGuard requireAuth={false}>
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background sm:px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto"></div>
-            <p className="mt-4 text-lg">リセットリンクを処理中...</p>
+        <div className="flex min-h-screen w-full flex-col items-center justify-center relative overflow-hidden">
+          {/* オーロラ背景 */}
+          <div className="fixed inset-0 z-0 bg-black">
+            <Aurora
+              colorStops={["#000066", "#eb6d9a", "#000066"]}
+              amplitude={1.0}
+              blend={0.5}
+              speed={1.0}
+            />
           </div>
+          
+          <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md relative z-10">
+            <CardContent className="text-center p-6">
+              <Skeleton className="h-12 w-12 rounded-full mx-auto animate-pulse" />
+              <p className="mt-4 text-lg text-white">リセットリンクを処理中...</p>
+            </CardContent>
+          </Card>
         </div>
       </AuthGuard>
     );
@@ -126,9 +140,19 @@ function ResetPasswordContent() {
 
   return (
     <AuthGuard requireAuth={false}>
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background sm:px-4">
-        <div className="w-full space-y-4 sm:max-w-md">
-          <Card>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center relative overflow-hidden">
+        {/* オーロラ背景 */}
+        <div className="fixed inset-0 z-0 bg-black">
+          <Aurora
+            colorStops={["#000066", "#eb6d9a", "#000066"]}
+            amplitude={1.0}
+            blend={0.5}
+            speed={1.0}
+          />
+        </div>
+        
+        <div className="w-full space-y-4 sm:max-w-md relative z-10">
+          <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md">
             <CardHeader className="space-y-1">
               <div className="flex items-center space-x-2">
                 <Button
@@ -139,9 +163,9 @@ function ResetPasswordContent() {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <CardTitle className="text-2xl">新しいパスワードを設定</CardTitle>
+                <CardTitle className="text-2xl text-white">新しいパスワードを設定</CardTitle>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/80">
                 新しいパスワードを入力してください。
               </p>
             </CardHeader>
@@ -178,7 +202,7 @@ function ResetPasswordContent() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 mr-1 h-8 w-8 p-0"
+                      className="absolute top-1/2 right-3 transform -translate-y-1/2 flex items-center justify-center h-8 w-8 p-0"
                       disabled={isLoading}
                     >
                       {showPassword ? (
@@ -209,7 +233,7 @@ function ResetPasswordContent() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 mr-1 h-8 w-8 p-0"
+                      className="absolute top-1/2 right-3 transform -translate-y-1/2 flex items-center justify-center h-8 w-8 p-0"
                       disabled={isLoading}
                     >
                       {showConfirmPassword ? (
@@ -240,11 +264,23 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background sm:px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto"></div>
-          <p className="mt-4 text-lg">読み込み中...</p>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center relative overflow-hidden">
+        {/* オーロラ背景 */}
+        <div className="fixed inset-0 z-0 bg-black">
+          <Aurora
+            colorStops={["#000066", "#eb6d9a", "#000066"]}
+            amplitude={1.0}
+            blend={0.5}
+            speed={1.0}
+          />
         </div>
+        
+        <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md relative z-10">
+          <CardContent className="text-center p-6">
+            <Skeleton className="h-12 w-12 rounded-full mx-auto animate-pulse" />
+            <p className="mt-4 text-lg text-white">読み込み中...</p>
+          </CardContent>
+        </Card>
       </div>
     }>
       <ResetPasswordContent />
