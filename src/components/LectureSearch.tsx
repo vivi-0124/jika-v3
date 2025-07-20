@@ -82,9 +82,13 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
 
   return (
     <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-      <CardContent className="p-6 space-y-4">
+      <CardContent className="px-6 space-y-4">
         {/* 検索バー */}
         <div className="space-y-4">
+          <div className="flex items-center space-x-2 mb-4">
+            <Search className="h-5 w-5 text-white" />
+            <h2 className="text-xl font-bold text-white">授業検索</h2>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
             <Input
@@ -126,14 +130,14 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
         {/* フィルター */}
         {showFilters && (
           <div className="space-y-4 pt-4 border-t border-white/20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">曜日</label>
                 <Select value={filters.dayOfWeek} onValueChange={(value) => setFilters({ ...filters, dayOfWeek: value })}>
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-white/20">
+                  <SelectContent className="bg-slate-800 border-white/20 text-white/80">
                     <SelectItem value="all">すべて</SelectItem>
                     <SelectItem value="月">月曜日</SelectItem>
                     <SelectItem value="火">火曜日</SelectItem>
@@ -151,7 +155,7 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-white/20">
+                  <SelectContent className="bg-slate-800 border-white/20 text-white/80">
                     <SelectItem value="all">すべて</SelectItem>
                     <SelectItem value="１限">1限</SelectItem>
                     <SelectItem value="２限">2限</SelectItem>
@@ -169,7 +173,7 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-white/20">
+                  <SelectContent className="bg-slate-800 border-white/20 text-white/80">
                     <SelectItem value="前学期">前学期</SelectItem>
                     <SelectItem value="後学期">後学期</SelectItem>
                   </SelectContent>
@@ -182,7 +186,7 @@ export default function LectureSearch({ onSearch }: LectureSearchProps) {
                   <SelectTrigger className="bg-black/20 backdrop-blur-sm border-white/20 text-white">
                     <SelectValue placeholder="すべて" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-white/20">
+                  <SelectContent className="bg-slate-800 border-white/20 text-white/80">
                     <SelectItem value="all">すべて</SelectItem>
                     <SelectItem value="共１">共通科目</SelectItem>
                     <SelectItem value="群１">国際教養学科</SelectItem>

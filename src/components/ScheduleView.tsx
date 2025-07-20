@@ -7,11 +7,11 @@ export default function ScheduleView() {
 
   const days = ['月', '火', '水', '木', '金'];
   const periods = [
-    { id: '１限', time: '08:45-10:15' },
-    { id: '２限', time: '10:30-12:00' },
-    { id: '３限', time: '13:00-14:30' },
-    { id: '４限', time: '14:45-16:15' },
-    { id: '５限', time: '16:30-18:00' }
+    { id: '１限', time: ['08:45', '10:15'] },
+    { id: '２限', time: ['10:30', '12:00'] },
+    { id: '３限', time: ['13:00', '14:30'] },
+    { id: '４限', time: ['14:45', '16:15'] },
+    { id: '５限', time: ['16:30', '18:00'] }
   ];
 
   // 指定された曜日・時限の授業を取得
@@ -30,9 +30,7 @@ export default function ScheduleView() {
           <table className="w-full table-fixed">
             <thead>
               <tr className="border-b border-white/20">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-white/80 w-20">
-                  時限
-                </th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-white/80 w-10"></th>
                 {days.map((day) => (
                   <th key={day} className="px-3 py-3 text-center text-sm font-semibold text-white/80 w-1/5">
                     {day}
@@ -43,10 +41,13 @@ export default function ScheduleView() {
             <tbody>
               {periods.map((period) => (
                 <tr key={period.id} className="border-b border-white/10">
-                  <td className="px-4 py-4 text-sm font-semibold text-white bg-white/5 w-20">
+                  <td className="text-sm font-semibold text-white bg-white/5 w-10">
                     <div className="flex flex-col">
-                      <span className="font-bold text-lg">{period.id.replace('限', '')}</span>
-                      <span className="text-xs text-white/60">{period.time}</span>
+                      <span className="font-bold text-lg text-center">{period.id.replace('限', '')}</span>
+                      <div className="text-xs text-white/60 text-center">
+                        <div>{period.time[0]}</div>
+                        <div>{period.time[1]}</div>
+                      </div>
                     </div>
                   </td>
                   {days.map((day) => {

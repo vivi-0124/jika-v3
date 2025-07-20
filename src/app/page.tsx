@@ -45,7 +45,7 @@ export default function HomePage() {
       {/* オーロラ背景 */}
       <div className="fixed inset-0 z-0 bg-black">
         <Aurora
-          colorStops={["#5227FF", "#7cff67", "#5227FF"]}
+          colorStops={["#68be8d", "#89c3eb", "#ffec47"]}
           amplitude={1.0}
           blend={0.5}
           speed={1.0}
@@ -98,22 +98,18 @@ export default function HomePage() {
       {/* メインコンテンツ */}
       <main className="flex-1 container mx-auto relative z-10">
         <Card className="border-0 shadow-2xl bg-black/20 backdrop-blur-md">
-          <CardContent className="px-6">
-            {/* 検索機能 */}
-            {activeBottomTab === 'search' && (
-              <div className="space-y-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Search className="h-5 w-5 text-white" />
-                  <h2 className="text-xl font-bold text-white">授業検索</h2>
-                </div>
-                <LectureSearch onSearch={(results) => setLectures(results)} />
-                <LectureList lectures={lectures} loading={false} />
-              </div>
-            )}
-
+          <CardContent className="p-0">
             {/* 時間割機能 */}
             {activeBottomTab === 'schedule' && (
                 <ScheduleView />
+            )}
+
+            {/* 検索機能 */}
+            {activeBottomTab === 'search' && (
+              <div className="space-y-6">
+                <LectureSearch onSearch={(results) => setLectures(results)} />
+                <LectureList lectures={lectures} loading={false} />
+              </div>
             )}
 
             {/* 共有機能 */}
@@ -156,7 +152,7 @@ export default function HomePage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex flex-col items-center space-y-1 h-auto py-2"
+              className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
               onClick={() => setActiveBottomTab('schedule')}
             >
               <Calendar className={`h-5 w-5 ${activeBottomTab === 'schedule' ? 'text-white' : 'text-white/60'}`} />
@@ -164,7 +160,7 @@ export default function HomePage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex flex-col items-center space-y-1 h-auto py-2"
+              className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
               onClick={() => setActiveBottomTab('search')}
             >
               <Search className={`h-5 w-5 ${activeBottomTab === 'search' ? 'text-white' : 'text-white/60'}`} />
@@ -172,7 +168,7 @@ export default function HomePage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex flex-col items-center space-y-1 h-auto py-2"
+              className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
               onClick={() => setActiveBottomTab('share')}
             >
               <Share className={`h-5 w-5 ${activeBottomTab === 'share' ? 'text-white' : 'text-white/60'}`} />
@@ -180,7 +176,7 @@ export default function HomePage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex flex-col items-center space-y-1 h-auto py-2"
+              className="flex flex-col items-center space-y-1 h-auto py-2 hover:bg-white/10"
               onClick={() => setActiveBottomTab('todo')}
             >
               <CheckSquare className={`h-5 w-5 ${activeBottomTab === 'todo' ? 'text-white' : 'text-white/60'}`} />
