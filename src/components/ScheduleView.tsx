@@ -30,9 +30,9 @@ export default function ScheduleView() {
           <table className="w-full table-fixed">
             <thead>
               <tr className="border-b border-white/20">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-white/80 w-10"></th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-white/80 w-10 border-r border-white/20"></th>
                 {days.map((day) => (
-                  <th key={day} className="px-3 py-3 text-center text-sm font-semibold text-white/80 w-1/5">
+                  <th key={day} className="px-3 py-3 text-center text-sm font-semibold text-white/80 w-1/5 border-r border-white/20">
                     {day}
                   </th>
                 ))}
@@ -41,7 +41,7 @@ export default function ScheduleView() {
             <tbody>
               {periods.map((period) => (
                 <tr key={period.id} className="border-b border-white/10">
-                  <td className="text-sm font-semibold text-white bg-white/5 w-10">
+                  <td className="text-sm font-semibold text-white bg-white/5 w-10 border-r border-white/20">
                     <div className="flex flex-col">
                       <span className="font-bold text-lg text-center">{period.id.replace('限', '')}</span>
                       <div className="text-xs text-white/60 text-center">
@@ -55,9 +55,9 @@ export default function ScheduleView() {
                     const lecture = scheduleItem?.lecture;
                     
                     return (
-                      <td key={`${day}-${period.id}`} className="text-sm">
+                      <td key={`${day}-${period.id}`} className="text-sm border-r border-white/10">
                         {lecture ? (
-                          <div className={`bg-black/90 backdrop-blur-sm rounded-lg p-2 h-32`}>
+                          <div className={`bg-black/90 backdrop-blur-sm p-2 h-32`}>
                             <div className="h-full flex flex-col justify-between">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
@@ -83,7 +83,7 @@ export default function ScheduleView() {
                             </div>
                           </div>
                         ) : (
-                          <div className="h-32 bg-black/5 border border-white/10 rounded-lg flex items-center justify-center">
+                          <div className="h-32 bg-black/5 border border-white/10 flex items-center justify-center">
                             <span className="text-xs text-white/30">-</span>
                           </div>
                         )}
