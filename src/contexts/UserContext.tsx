@@ -3,11 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { User } from '@supabase/supabase-js';
-import { 
-  getUserScheduleAction, 
-  addLectureToScheduleAction, 
-  removeLectureFromScheduleAction 
-} from '@/lib/actions/schedule-actions';
 import { toast } from 'sonner';
 
 interface Lecture {
@@ -49,10 +44,19 @@ interface UserContextType {
   refreshSchedule: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
-  isOperating: boolean; // Server Action実行中のフラグ
+  isOperating: boolean; // API実行中のフラグ
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+
+// APIヘルパー関数
+async function apiRequest(url: string, options?: RequestInit) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
@@ -72,7 +76,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setScheduleLoading(true);
     try {
-      const result = await getUserScheduleAction(userId, '前学期');
+      const result = await apiRequest(`/api/schedule?userId=${encodeURIComponent(userId)}&term=前学期`);
       
       if (result.success) {
         setUserSchedule((result.data as UserScheduleItem[]) || []);
@@ -103,7 +107,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setIsOperating(true);
     try {
-      const result = await addLectureToScheduleAction(userId, lectureId);
+      const result = await apiRequest('/api/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, lectureId }),
+      });
       
       if (result.success) {
         // 楽観的更新の代わりに時間割を再取得
@@ -137,7 +147,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setIsOperating(true);
     try {
-      const result = await removeLectureFromScheduleAction(userId, lectureId);
+      const result = await apiRequest('/api/schedule', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, lectureId }),
+      });
       
       if (result.success) {
         // 楽観的更新の代わりに時間割を再取得
@@ -191,7 +207,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         refreshSchedule,
         isAuthenticated,
         isLoading: authLoading || scheduleLoading,
-        isOperating, // Server Action実行中のフラグを追加
+        isOperating, // API実行中のフラグを追加
       }}
     >
       {children}

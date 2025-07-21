@@ -1,4 +1,4 @@
-import { pgTable, serial, timestamp, varchar, integer, smallint } from 'drizzle-orm/pg-core';
+import { pgTable, serial, timestamp, varchar, integer, smallint, text, uuid } from 'drizzle-orm/pg-core';
 
 // 授業テーブル（実際のエクセルデータに合わせて）
 export const lectures = pgTable('lectures', {
@@ -32,7 +32,31 @@ export const userSchedules = pgTable('user_schedules', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// グループテーブル
+export const groups = pgTable('groups', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(), // グループ名
+  description: text('description'), // グループ説明
+  createdBy: varchar('created_by', { length: 255 }).notNull(), // 作成者のユーザーID
+  inviteCode: varchar('invite_code', { length: 32 }).notNull().unique(), // 招待コード
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// グループメンバーテーブル
+export const groupMembers = pgTable('group_members', {
+  id: serial('id').primaryKey(),
+  groupId: serial('group_id').references(() => groups.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 255 }).notNull(), // Supabase AuthのユーザーID
+  role: varchar('role', { length: 20 }).notNull().default('member'), // 'admin' または 'member'
+  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+});
+
 export type Lecture = typeof lectures.$inferSelect;
 export type NewLecture = typeof lectures.$inferInsert;
 export type UserSchedule = typeof userSchedules.$inferSelect;
-export type NewUserSchedule = typeof userSchedules.$inferInsert; 
+export type NewUserSchedule = typeof userSchedules.$inferInsert;
+export type Group = typeof groups.$inferSelect;
+export type NewGroup = typeof groups.$inferInsert;
+export type GroupMember = typeof groupMembers.$inferSelect;
+export type NewGroupMember = typeof groupMembers.$inferInsert; 

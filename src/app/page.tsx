@@ -6,6 +6,7 @@ import { Search, Calendar, User, Share, CheckSquare, LogOut } from 'lucide-react
 import LectureSearch from '@/components/LectureSearch';
 import ScheduleView from '@/components/ScheduleView';
 import LectureList from '@/components/LectureList';
+import SharedTab from '@/components/SharedTab';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -230,16 +231,8 @@ const MainContent = ({
       
       case 'share':
         return (
-          <div className="space-y-6 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Share className="h-5 w-5 text-white" />
-              <h2 className="text-xl font-bold text-white">共有</h2>
-            </div>
-            <div className="text-center py-12">
-              <Share className="mx-auto h-12 w-12 text-white/40" />
-              <h3 className="mt-4 text-sm font-medium text-white">共有機能</h3>
-              <p className="mt-2 text-xs text-white/60">時間割の共有機能は準備中です。</p>
-            </div>
+          <div className="p-6">
+            <SharedTab />
           </div>
         );
       

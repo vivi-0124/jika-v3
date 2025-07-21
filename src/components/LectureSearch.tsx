@@ -7,8 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { searchLecturesAction, type SearchParams } from '@/lib/actions/lecture-actions';
 import { toast } from 'sonner';
+
+// 型定義
+interface SearchParams {
+  query?: string;
+  dayOfWeek?: string;
+  period?: string;
+  term?: string;
+  target?: string;
+}
 
 interface LectureSearchProps {
   onSearch: (results: Lecture[]) => void;
@@ -62,7 +70,22 @@ export default function LectureSearch({ onSearch, onSearchStateChange }: Lecture
       onSearchStateChange?.(true);
       
       try {
-        const result = await searchLecturesAction(searchParams);
+        // URLSearchParamsを使ってクエリパラメータを構築
+        const params = new URLSearchParams();
+        if (searchParams.query) params.append('query', searchParams.query);
+        if (searchParams.dayOfWeek && searchParams.dayOfWeek !== 'all') params.append('dayOfWeek', searchParams.dayOfWeek);
+        if (searchParams.period && searchParams.period !== 'all') params.append('period', searchParams.period);
+        if (searchParams.term) params.append('term', searchParams.term);
+        if (searchParams.target && searchParams.target !== 'all') params.append('target', searchParams.target);
+
+        const url = `/api/lectures${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
         
         if (result.success) {
           onSearch((result.data as Lecture[]) || []);
