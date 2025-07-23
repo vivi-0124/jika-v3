@@ -37,6 +37,20 @@ function generateTimeSlots(): TimeSlot[] {
   return slots;
 }
 
+// periodの形式を正規化（'１限' -> '1', '1限' -> '1'）
+function normalizePeriod(period: string): string {
+  // 数字部分を抽出
+  const match = period.match(/[0-9１-９]/);
+  if (!match) return period;
+  
+  // 全角数字を半角に変換
+  const num = match[0].replace(/[１-９]/g, (char) => {
+    return String.fromCharCode(char.charCodeAt(0) - 0xFEE0);
+  });
+  
+  return num;
+}
+
 // グループメンバーの共通空きコマを取得
 export async function GET(
   request: NextRequest,
@@ -76,21 +90,42 @@ export async function GET(
       })
       .from(groupMembers)
       .where(eq(groupMembers.groupId, groupId));
+    
+    console.log('グループメンバー:', {
+      groupId,
+      members: members.map(m => m.userId)
+    });
 
     if (members.length === 0) {
+      const emptySlots = generateTimeSlots();
       return NextResponse.json({
         success: true,
         data: {
-          term,
+          term: dbTerm,
+
+
+
+
           totalMembers: 0,
-          timeSlots: generateTimeSlots(),
-          freeSlots: generateTimeSlots()
+          timeSlots: emptySlots,
+          freeSlots: emptySlots
         },
         message: 'グループにメンバーがいません'
       });
     }
 
     const memberUserIds = members.map(m => m.userId);
+
+    // データベースの形式に合わせる（年度なしの '前学期' または '後学期'）
+    const dbTerm = term;
+    
+    console.log('共通空きコマ検索条件:', {
+      groupId,
+      term,
+      dbTerm,
+      memberUserIds,
+      memberCount: memberUserIds.length
+    });
 
     // 全メンバーの時間割を取得
     const allSchedules = await db
@@ -106,17 +141,25 @@ export async function GET(
       .where(
         and(
           inArray(userSchedules.userId, memberUserIds),
-          eq(lectures.term, term)
+          eq(lectures.term, dbTerm)
         )
       );
+    
+    console.log('取得した授業データ:', {
+      count: allSchedules.length,
+      samples: allSchedules.slice(0, 5)
+    });
 
     // タイムスロットを初期化
     const timeSlots = generateTimeSlots();
 
     // 各メンバーの授業を確認してタイムスロットを更新
     for (const schedule of allSchedules) {
+      // periodを正規化
+      const normalizedPeriod = normalizePeriod(schedule.period);
+      
       const slotIndex = timeSlots.findIndex(
-        slot => slot.dayOfWeek === schedule.dayOfWeek && slot.period === schedule.period
+        slot => slot.dayOfWeek === schedule.dayOfWeek && slot.period === normalizedPeriod
       );
 
       if (slotIndex !== -1) {
@@ -127,15 +170,27 @@ export async function GET(
       }
     }
 
-    // 全員が空いている時間を特定
-    const freeSlots = timeSlots.filter(slot => {
+    // 各スロットについて、全員が空いているかどうかを判定
+    for (const slot of timeSlots) {
       const occupied = slot.occupiedBy?.length || 0;
+      // 全員が空いている = 誰も授業がない
       slot.isFree = occupied === 0;
-      return slot.isFree;
-    });
+    }
+    
+    // 全員が空いている時間を抽出
+    const freeSlots = timeSlots.filter(slot => slot.isFree);
+    
+    // デバッグ: 授業がある時間帯を確認
+    const occupiedSlots = timeSlots.filter(slot => (slot.occupiedBy?.length || 0) > 0);
+    console.log('授業がある時間帯:', occupiedSlots.map(slot => ({
+      day: slot.dayOfWeek,
+      period: slot.period,
+      occupiedCount: slot.occupiedBy?.length,
+      users: slot.occupiedBy
+    })));
 
     const analysis: FreeSlotAnalysis = {
-      term,
+      term: dbTerm,
       totalMembers: members.length,
       timeSlots,
       freeSlots
