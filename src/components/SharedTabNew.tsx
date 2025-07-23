@@ -178,25 +178,25 @@ export default function SharedTabNew() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* ヘッダー */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Share2 className="h-8 w-8" />
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4">
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center sm:justify-start gap-2 sm:gap-3">
+              <Share2 className="h-6 w-6 sm:h-8 sm:w-8" />
               時間割共有
             </h1>
-            <p className="text-white/70 mt-2">
+            <p className="text-white/70 mt-2 text-sm sm:text-base">
               グループメンバーと時間割を共有して、共通の空き時間を見つけよう
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center sm:justify-end">
             <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
+                <Button variant="outline" size="sm" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
                   <UserPlus className="h-4 w-4 mr-2" />
-                  参加
+                  <span className="hidden sm:inline">参加</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-black/90 backdrop-blur-md border-white/20">
@@ -228,9 +228,10 @@ export default function SharedTabNew() {
             
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                <Button size="sm" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
                   <Plus className="h-4 w-4 mr-2" />
-                  新規作成
+                  <span className="hidden sm:inline">新規作成</span>
+                  <span className="sm:hidden">作成</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-black/90 backdrop-blur-md border-white/20">
@@ -274,54 +275,57 @@ export default function SharedTabNew() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* 左側：グループリスト */}
-        <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-xl font-semibold text-white mb-4">
-            マイグループ
-            <Badge variant="secondary" className="ml-2">
-              {groups.length}
-            </Badge>
-          </h2>
+      <div className="space-y-6">
+        {/* グループリスト */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl font-semibold text-white">
+              マイグループ
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {groups.length}
+              </Badge>
+            </h2>
+          </div>
           
           {isLoading ? (
             <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-              <CardContent className="p-6 text-center">
-                <p className="text-white">読み込み中...</p>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <p className="text-white text-sm">読み込み中...</p>
               </CardContent>
             </Card>
           ) : groups.length === 0 ? (
             <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-              <CardContent className="p-6 text-center">
-                <Users className="h-12 w-12 text-white/40 mx-auto mb-3" />
-                <p className="text-white/70 mb-1">まだグループに参加していません</p>
-                <p className="text-white/50 text-sm">新しいグループを作成するか、招待コードで参加してください</p>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <Users className="h-8 w-8 sm:h-12 sm:w-12 text-white/40 mx-auto mb-3" />
+                <p className="text-white/70 mb-1 text-sm sm:text-base">まだグループに参加していません</p>
+                <p className="text-white/50 text-xs sm:text-sm">新しいグループを作成するか、招待コードで参加してください</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {groups.map((group) => (
-                <Card 
-                  key={group.id} 
-                  className={`border-0 shadow-xl bg-black/20 backdrop-blur-md cursor-pointer transition-all hover:bg-black/30 ${
-                    selectedGroup?.id === group.id ? 'ring-2 ring-indigo-500 bg-black/30' : ''
-                  }`}
-                  onClick={() => setSelectedGroup(group)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-white">{group.name}</h3>
+            <>
+              {/* モバイル：水平スクロール可能なグループリスト */}
+              <div className="sm:hidden">
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {groups.map((group) => (
+                    <Card 
+                      key={group.id} 
+                      className={`border-0 shadow-xl bg-black/20 backdrop-blur-md cursor-pointer transition-all hover:bg-black/30 flex-shrink-0 w-64 ${
+                        selectedGroup?.id === group.id ? 'ring-2 ring-indigo-500 bg-black/30' : ''
+                      }`}
+                      onClick={() => setSelectedGroup(group)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-white text-sm truncate flex-1">{group.name}</h3>
                           {group.role === 'admin' && (
-                            <Badge variant="destructive" className="text-xs">管理者</Badge>
+                            <Badge variant="destructive" className="text-xs ml-2">管理者</Badge>
                           )}
                         </div>
                         {group.description && (
-                          <p className="text-white/60 text-sm mb-2">{group.description}</p>
+                          <p className="text-white/60 text-xs mb-2 line-clamp-2">{group.description}</p>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <span className="bg-white/10 px-2 py-1 rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="bg-white/10 px-2 py-1 rounded text-xs text-white/70">
                             {group.inviteCode}
                           </span>
                           <Button
@@ -336,51 +340,98 @@ export default function SharedTabNew() {
                             <Copy className="h-3 w-3" />
                           </Button>
                         </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-white/40" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+              
+              {/* デスクトップ：縦に並んだグループリスト */}
+              <div className="hidden sm:block">
+                <div className="grid sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {groups.map((group) => (
+                    <Card 
+                      key={group.id} 
+                      className={`border-0 shadow-xl bg-black/20 backdrop-blur-md cursor-pointer transition-all hover:bg-black/30 ${
+                        selectedGroup?.id === group.id ? 'ring-2 ring-indigo-500 bg-black/30' : ''
+                      }`}
+                      onClick={() => setSelectedGroup(group)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-white text-sm">{group.name}</h3>
+                              {group.role === 'admin' && (
+                                <Badge variant="destructive" className="text-xs">管理者</Badge>
+                              )}
+                            </div>
+                            {group.description && (
+                              <p className="text-white/60 text-xs mb-2 line-clamp-2">{group.description}</p>
+                            )}
+                            <div className="flex items-center gap-2 text-xs text-white/50">
+                              <span className="bg-white/10 px-2 py-1 rounded">
+                                {group.inviteCode}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyInviteCode(group.inviteCode);
+                                }}
+                                className="h-6 w-6 p-0 text-white/50 hover:text-white"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-white/40 flex-shrink-0 ml-2" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </div>
 
-        {/* 右側：選択されたグループの詳細 */}
-        <div className="lg:col-span-2">
+        {/* 選択されたグループの詳細 */}
+        <div>
           {selectedGroup ? (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* グループ情報ヘッダー */}
               <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-2xl text-white">{selectedGroup.name}</CardTitle>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg sm:text-xl lg:text-2xl text-white">{selectedGroup.name}</CardTitle>
                       {selectedGroup.description && (
-                        <p className="text-white/70 mt-1">{selectedGroup.description}</p>
+                        <p className="text-white/70 mt-1 text-sm sm:text-base">{selectedGroup.description}</p>
                       )}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleLeaveGroup(selectedGroup)}
-                      className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20"
+                      className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 self-start"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
-                      脱退
+                      <span className="hidden sm:inline">脱退</span>
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-white/70">
+                <CardContent className="pt-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-white/70">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
+                      <Clock className="h-4 w-4 flex-shrink-0" />
                       <span>招待コード: {selectedGroup.inviteCode}</span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => copyInviteCode(selectedGroup.inviteCode)}
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 flex-shrink-0"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -393,12 +444,12 @@ export default function SharedTabNew() {
               <GroupScheduleView group={selectedGroup} />
             </div>
           ) : (
-            <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md h-full">
-              <CardContent className="p-12 text-center flex flex-col items-center justify-center h-full">
-                <Calendar className="h-16 w-16 text-white/40 mb-4" />
-                <h3 className="text-2xl font-semibold text-white mb-2">グループを選択してください</h3>
-                <p className="text-white/70 max-w-md">
-                  左側のリストからグループを選択すると、メンバー全員の共通空きコマが表示されます
+            <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
+              <CardContent className="p-6 sm:p-8 lg:p-12 text-center">
+                <Calendar className="h-12 w-12 sm:h-16 sm:w-16 text-white/40 mx-auto mb-4" />
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-2">グループを選択してください</h3>
+                <p className="text-white/70 text-sm sm:text-base max-w-md mx-auto">
+                  上のリストからグループを選択すると、メンバー全員の共通空きコマが表示されます
                 </p>
               </CardContent>
             </Card>
