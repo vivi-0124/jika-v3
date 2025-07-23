@@ -96,16 +96,15 @@ export async function GET(
       members: members.map(m => m.userId)
     });
 
+    // データベースの形式に合わせる（年度なしの '前学期' または '後学期'）
+    const dbTerm = term;
+
     if (members.length === 0) {
       const emptySlots = generateTimeSlots();
       return NextResponse.json({
         success: true,
         data: {
           term: dbTerm,
-
-
-
-
           totalMembers: 0,
           timeSlots: emptySlots,
           freeSlots: emptySlots
@@ -115,9 +114,6 @@ export async function GET(
     }
 
     const memberUserIds = members.map(m => m.userId);
-
-    // データベースの形式に合わせる（年度なしの '前学期' または '後学期'）
-    const dbTerm = term;
     
     console.log('共通空きコマ検索条件:', {
       groupId,

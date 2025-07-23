@@ -52,8 +52,8 @@ export default function SharedTabNew() {
           setSelectedGroup(result.data[0]);
         }
       }
-    } catch (error) {
-      console.error('グループ取得エラー:', error);
+    } catch (err) {
+      console.error('グループ取得エラー:', err);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +84,8 @@ export default function SharedTabNew() {
       } else {
         toast.error(result.error || 'グループの作成に失敗しました');
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('グループ作成エラー:', err);
       toast.error('グループの作成中にエラーが発生しました');
     }
   };
@@ -113,7 +114,8 @@ export default function SharedTabNew() {
       } else {
         toast.error(result.error || 'グループの参加に失敗しました');
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('グループ参加エラー:', err);
       toast.error('グループの参加中にエラーが発生しました');
     }
   };
@@ -142,7 +144,8 @@ export default function SharedTabNew() {
       } else {
         toast.error(result.error || 'グループの脱退に失敗しました');
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('グループ脱退エラー:', err);
       toast.error('グループの脱退中にエラーが発生しました');
     }
   };
@@ -152,14 +155,15 @@ export default function SharedTabNew() {
     try {
       await navigator.clipboard.writeText(inviteCode);
       toast.success('招待コードをコピーしました');
-    } catch (error) {
+    } catch (err) {
+      console.error('コピーエラー:', err);
       toast.error('コピーに失敗しました');
     }
   };
 
   useEffect(() => {
     fetchGroups();
-  }, [userId, isAuthenticated]);
+  }, [userId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isAuthenticated) {
     return (
