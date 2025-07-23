@@ -85,7 +85,7 @@ export default function ScheduleView() {
                     return (
                       <td key={`${day}-${period.id}`} className="text-sm border-r border-white/10">
                         {lecture ? (
-                          <div className={`bg-black/90 backdrop-blur-sm p-2 h-36`}>
+                          <div className={`bg-black/90 backdrop-blur-sm p-2 h-24`}>
                             <div className="h-full flex flex-col justify-between">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
