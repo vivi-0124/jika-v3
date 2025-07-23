@@ -3,9 +3,10 @@ import { getLectureById } from '@/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const id = parseInt(params.id);
     
     if (isNaN(id) || id <= 0) {

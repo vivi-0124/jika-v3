@@ -6,9 +6,10 @@ import { eq, and } from 'drizzle-orm';
 // グループ詳細を取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const groupId = parseInt(params.id);
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
@@ -74,9 +75,10 @@ export async function GET(
 // グループから脱退
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const groupId = parseInt(params.id);
     const { userId } = await request.json();
 

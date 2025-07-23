@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Users, Copy, LogOut, Settings } from 'lucide-react';
+import { Plus, Users, Copy, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 
@@ -24,7 +24,7 @@ interface Group {
 }
 
 interface GroupManagerProps {
-  onGroupSelect: (group: Group) => void;
+  onGroupSelect: (group: Group | null) => void;
   selectedGroup?: Group | null;
 }
 
@@ -72,21 +72,22 @@ export default function GroupManager({ onGroupSelect, selectedGroup }: GroupMana
         const rawData = result.data || [];
         console.log('Raw API data:', rawData);
         
-        const cleanedData = rawData.map((group: any) => {
+        const cleanedData = rawData.map((group: unknown) => {
           if (!group || typeof group !== 'object') {
             console.warn('Invalid group data:', group);
             return null;
           }
+          const g = group as Record<string, unknown>;
           
           return {
-            id: group.id || 0,
-            name: group.name || '',
-            description: group.description || null,
-            createdBy: group.createdBy || '',
-            inviteCode: group.inviteCode || group.joinCode || '',
-            createdAt: group.createdAt || new Date().toISOString(),
-            role: group.role || 'member',
-            joinedAt: group.joinedAt || new Date().toISOString()
+            id: (g.id as number) || 0,
+            name: (g.name as string) || '',
+            description: (g.description as string | null) || null,
+            createdBy: (g.createdBy as string) || '',
+            inviteCode: (g.inviteCode as string) || (g.joinCode as string) || '',
+            createdAt: (g.createdAt as string) || new Date().toISOString(),
+            role: (g.role as string) || 'member',
+            joinedAt: (g.joinedAt as string) || new Date().toISOString()
           };
         }).filter(Boolean); // nullを除外
         
@@ -94,12 +95,12 @@ export default function GroupManager({ onGroupSelect, selectedGroup }: GroupMana
         setGroups(cleanedData);
       } else {
         console.error('グループ取得エラー:', result.error);
-        toast.error(result.error || 'グループの取得に失敗しました');
+        // トースト通知を削除（エラーの場合のみコンソールログ）
       }
     } catch (error) {
       console.error('グループ取得エラー:', error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
-      toast.error(`グループの取得に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+      // トースト通知を削除（エラーの場合のみコンソールログ）
     } finally {
       setIsLoading(false);
     }
@@ -191,7 +192,7 @@ export default function GroupManager({ onGroupSelect, selectedGroup }: GroupMana
         toast.success(result.message || 'グループから脱退しました');
         fetchGroups();
         if (selectedGroup?.id === group.id) {
-          onGroupSelect(null as any);
+          onGroupSelect(null);
         }
       } else {
         toast.error(result.error || 'グループの脱退に失敗しました');
@@ -215,7 +216,7 @@ export default function GroupManager({ onGroupSelect, selectedGroup }: GroupMana
 
   useEffect(() => {
     fetchGroups();
-  }, [userId, isAuthenticated]);
+  }, [userId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isAuthenticated) {
     return (

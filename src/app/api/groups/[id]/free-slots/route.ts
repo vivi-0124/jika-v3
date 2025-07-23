@@ -40,9 +40,10 @@ function generateTimeSlots(): TimeSlot[] {
 // グループメンバーの共通空きコマを取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const groupId = parseInt(params.id);
     const { searchParams } = new URL(request.url);
     const term = searchParams.get('term') || '前学期';

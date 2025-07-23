@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Clock, Users, Calendar, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,7 +45,7 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
   const periods = ['1', '2', '3', '4', '5'];
 
   // 共通空きコマを取得
-  const fetchFreeSlots = async () => {
+  const fetchFreeSlots = async (showToast = false) => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/groups/${group.id}/free-slots?term=${encodeURIComponent(selectedTerm)}`);
@@ -54,9 +53,13 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
       
       if (result.success) {
         setAnalysis(result.data);
-        toast.success(result.message || '空きコマを取得しました');
+        // 手動更新時のみトースト表示
+        if (showToast) {
+          toast.success('空きコマ情報を更新しました');
+        }
       } else {
         console.error('空きコマ取得エラー:', result.error);
+        // エラーの場合のみトースト表示
         toast.error(result.error || '空きコマの取得に失敗しました');
         setAnalysis(null);
       }
@@ -110,7 +113,7 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
 
   useEffect(() => {
     fetchFreeSlots();
-  }, [group.id, selectedTerm]);
+  }, [group.id, selectedTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">
@@ -137,7 +140,7 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={fetchFreeSlots}
+                onClick={() => fetchFreeSlots(true)}
                 disabled={isLoading}
                 className="bg-black/20 border-white/20 text-white hover:bg-white/10"
               >
@@ -234,7 +237,7 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchFreeSlots}
+              onClick={() => fetchFreeSlots(true)}
               className="mt-2 bg-black/20 border-white/20 text-white hover:bg-white/10"
             >
               再試行
