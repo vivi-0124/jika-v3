@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Calendar, User, Share, CheckSquare, LogOut } from 'lucide-react';
 import LectureSearch from '@/components/LectureSearch';
@@ -57,7 +57,7 @@ const BOTTOM_TABS = [
 ] as const;
 
 // コンポーネント
-const Header = ({ 
+const Header = memo(({ 
   selectedGrade, 
   onGradeChange, 
   totalCredits, 
@@ -168,9 +168,10 @@ const Header = ({
       </div>
     </div>
   </header>
-);
+));
+Header.displayName = 'Header';
 
-const BottomNavigation = ({ 
+const BottomNavigation = memo(({ 
   activeTab, 
   onTabChange 
 }: {
@@ -195,9 +196,60 @@ const BottomNavigation = ({
       </div>
     </div>
   </footer>
-);
+));
+BottomNavigation.displayName = 'BottomNavigation';
 
-const MainContent = ({ 
+// タブコンテンツコンポーネント
+const ScheduleTabContent = memo(() => <ScheduleView />);
+ScheduleTabContent.displayName = 'ScheduleTabContent';
+
+const SearchTabContent = memo(({ 
+  lectures, 
+  isSearching, 
+  onSearch, 
+  onSearchStateChange 
+}: {
+  lectures: Lecture[];
+  isSearching: boolean;
+  onSearch: (results: Lecture[]) => void;
+  onSearchStateChange: (searching: boolean) => void;
+}) => (
+  <div className="space-y-6">
+    <LectureSearch 
+      onSearch={onSearch} 
+      onSearchStateChange={onSearchStateChange}
+    />
+    <LectureList 
+      lectures={lectures} 
+      loading={isSearching} 
+    />
+  </div>
+));
+SearchTabContent.displayName = 'SearchTabContent';
+
+const ShareTabContent = memo(() => (
+  <div className="p-6">
+    <SharedTab />
+  </div>
+));
+ShareTabContent.displayName = 'ShareTabContent';
+
+const TodoTabContent = memo(() => (
+  <div className="space-y-6 p-6">
+    <div className="flex items-center space-x-2 mb-4">
+      <CheckSquare className="h-5 w-5 text-white" />
+      <h2 className="text-xl font-bold text-white">やること</h2>
+    </div>
+    <div className="text-center py-12">
+      <CheckSquare className="mx-auto h-12 w-12 text-white/40" />
+      <h3 className="mt-4 text-sm font-medium text-white">やることリスト</h3>
+      <p className="mt-2 text-xs text-white/60">やることリスト機能は準備中です。</p>
+    </div>
+  </div>
+));
+TodoTabContent.displayName = 'TodoTabContent';
+
+const MainContent = memo(({ 
   activeTab, 
   lectures, 
   isSearching, 
@@ -210,64 +262,52 @@ const MainContent = ({
   onSearch: (results: Lecture[]) => void;
   onSearchStateChange: (searching: boolean) => void;
 }) => {
-  console.log('MainContent active tab:', activeTab);
-  
-  const renderContent = () => {
+  const content = useMemo(() => {
     switch (activeTab) {
       case 'schedule':
-        return <ScheduleView />;
-      
+        return <ScheduleTabContent />;
       case 'search':
         return (
-          <div className="space-y-6">
-            <LectureSearch 
-              onSearch={onSearch} 
-              onSearchStateChange={onSearchStateChange}
-            />
-            <LectureList 
-              lectures={lectures} 
-              loading={isSearching} 
-            />
-          </div>
+          <SearchTabContent 
+            lectures={lectures} 
+            isSearching={isSearching} 
+            onSearch={onSearch} 
+            onSearchStateChange={onSearchStateChange}
+          />
         );
-      
       case 'share':
-        return (
-          <div className="p-6">
-            <SharedTab />
-          </div>
-        );
-      
+        return <ShareTabContent />;
       case 'todo':
-        return (
-          <div className="space-y-6 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <CheckSquare className="h-5 w-5 text-white" />
-              <h2 className="text-xl font-bold text-white">やること</h2>
-            </div>
-            <div className="text-center py-12">
-              <CheckSquare className="mx-auto h-12 w-12 text-white/40" />
-              <h3 className="mt-4 text-sm font-medium text-white">やることリスト</h3>
-              <p className="mt-2 text-xs text-white/60">やることリスト機能は準備中です。</p>
-            </div>
-          </div>
-        );
-      
+        return <TodoTabContent />;
       default:
         return null;
     }
-  };
+  }, [activeTab, lectures, isSearching, onSearch, onSearchStateChange]);
 
   return (
     <main className="flex-1 container mx-auto relative z-10">
       <Card className="border-0 shadow-2xl bg-transparent backdrop-blur-md">
         <CardContent className="p-0">
-          {renderContent()}
+          {content}
         </CardContent>
       </Card>
     </main>
   );
-};
+});
+MainContent.displayName = 'MainContent';
+
+// Aurora背景コンポーネント
+const AuroraBackground = memo(() => (
+  <div className="fixed inset-0 z-0 bg-black">
+    <Aurora
+      colorStops={["#000066", "#eb6d9a", "#000066"]}
+      amplitude={1.0}
+      blend={0.5}
+      speed={1.0}
+    />
+  </div>
+));
+AuroraBackground.displayName = 'AuroraBackground';
 
 // メインコンポーネント
 export default function HomePage() {
@@ -286,36 +326,37 @@ export default function HomePage() {
   // 単位数を計算
   const totalCredits = userSchedule.reduce((total, item) => total + (item.lecture.credits || 0), 0);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       await signOut();
     } catch (error) {
       console.error('ログアウトエラー:', error);
       window.location.href = '/login';
     }
-  };
+  }, [signOut]);
 
-  const handleProfileClick = () => {
+  const handleProfileClick = useCallback(() => {
     router.push('/profile');
-  };
+  }, [router]);
+  
+  const handleGradeChange = useCallback((grade: string) => {
+    setSelectedGrade(grade);
+  }, []);
+  
+  const handleTabChange = useCallback((tab: BottomTab) => {
+    setActiveBottomTab(tab);
+  }, []);
 
   return (
     <AuthGuard requireAuth={true}>
       <div className="flex flex-col min-h-screen relative overflow-hidden">
         {/* オーロラ背景 */}
-        <div className="fixed inset-0 z-0 bg-black">
-          <Aurora
-            colorStops={["#000066", "#eb6d9a", "#000066"]}
-            amplitude={1.0}
-            blend={0.5}
-            speed={1.0}
-          />
-        </div>
+        <AuroraBackground />
 
         {/* ヘッダー */}
         <Header
           selectedGrade={selectedGrade}
-          onGradeChange={setSelectedGrade}
+          onGradeChange={handleGradeChange}
           totalCredits={totalCredits}
           currentYear={currentYear}
           user={user}
@@ -337,7 +378,7 @@ export default function HomePage() {
         {/* ボトムナビゲーション */}
         <BottomNavigation
           activeTab={activeBottomTab}
-          onTabChange={setActiveBottomTab}
+          onTabChange={handleTabChange}
         />
       </div>
     </AuthGuard>
