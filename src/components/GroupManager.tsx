@@ -32,6 +32,8 @@ export default function GroupManager({ onGroupSelect, selectedGroup }: GroupMana
   const { userId, isAuthenticated } = useUser();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  console.log('GroupManager render:', { userId, isAuthenticated });
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   
@@ -48,22 +50,56 @@ export default function GroupManager({ onGroupSelect, selectedGroup }: GroupMana
 
   // グループ一覧を取得
   const fetchGroups = async () => {
-    if (!userId || !isAuthenticated) return;
+    console.log('fetchGroups called:', { userId, isAuthenticated, userIdType: typeof userId });
+    
+    if (!userId || !isAuthenticated) {
+      console.log('fetchGroups早期リターン:', { userId, isAuthenticated });
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/groups?userId=${encodeURIComponent(userId)}`);
+      const url = `/api/groups?userId=${encodeURIComponent(userId)}`;
+      console.log('API call URL:', url);
+      
+      const response = await fetch(url);
       const result = await response.json();
       
+      console.log('API response:', result);
+      
       if (result.success) {
-        setGroups(result.data || []);
+        // データの検証とクリーニング
+        const rawData = result.data || [];
+        console.log('Raw API data:', rawData);
+        
+        const cleanedData = rawData.map((group: any) => {
+          if (!group || typeof group !== 'object') {
+            console.warn('Invalid group data:', group);
+            return null;
+          }
+          
+          return {
+            id: group.id || 0,
+            name: group.name || '',
+            description: group.description || null,
+            createdBy: group.createdBy || '',
+            inviteCode: group.inviteCode || group.joinCode || '',
+            createdAt: group.createdAt || new Date().toISOString(),
+            role: group.role || 'member',
+            joinedAt: group.joinedAt || new Date().toISOString()
+          };
+        }).filter(Boolean); // nullを除外
+        
+        console.log('Cleaned group data:', cleanedData);
+        setGroups(cleanedData);
       } else {
         console.error('グループ取得エラー:', result.error);
         toast.error(result.error || 'グループの取得に失敗しました');
       }
     } catch (error) {
       console.error('グループ取得エラー:', error);
-      toast.error('グループの取得中にエラーが発生しました');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      toast.error(`グループの取得に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
     } finally {
       setIsLoading(false);
     }

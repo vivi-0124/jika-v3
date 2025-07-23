@@ -210,6 +210,8 @@ const MainContent = ({
   onSearch: (results: Lecture[]) => void;
   onSearchStateChange: (searching: boolean) => void;
 }) => {
+  console.log('MainContent active tab:', activeTab);
+  
   const renderContent = () => {
     switch (activeTab) {
       case 'schedule':

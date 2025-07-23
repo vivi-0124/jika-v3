@@ -21,7 +21,10 @@ interface Group {
 export default function SharedTab() {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
+  console.log('SharedTab rendered');
+
   const handleGroupSelect = (group: Group | null) => {
+    console.log('Group selected:', group);
     setSelectedGroup(group);
   };
 

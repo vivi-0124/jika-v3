@@ -63,9 +63,10 @@ export async function GET(
     });
   } catch (error) {
     console.error('グループ詳細取得エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
     return NextResponse.json({
       success: false,
-      error: 'グループの詳細取得に失敗しました。もう一度お試しください。'
+      error: `グループの詳細取得に失敗しました: ${errorMessage}`
     }, { status: 500 });
   }
 }
@@ -149,9 +150,10 @@ export async function DELETE(
     });
   } catch (error) {
     console.error('グループ脱退エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
     return NextResponse.json({
       success: false,
-      error: 'グループの脱退に失敗しました。もう一度お試しください。'
+      error: `グループの脱退に失敗しました: ${errorMessage}`
     }, { status: 500 });
   }
 } 

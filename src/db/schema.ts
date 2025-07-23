@@ -27,7 +27,7 @@ export const lectures = pgTable('lectures', {
 // ユーザーの時間割テーブル（後で使用）
 export const userSchedules = pgTable('user_schedules', {
   id: serial('id').primaryKey(),
-  userId: varchar('user_id', { length: 255 }).notNull(), // Supabase AuthのユーザーID
+  userId: uuid('user_id').notNull(), // Supabase AuthのユーザーID (uuid型)
   lectureId: serial('lecture_id').references(() => lectures.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -37,8 +37,8 @@ export const groups = pgTable('groups', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 100 }).notNull(), // グループ名
   description: text('description'), // グループ説明
-  createdBy: varchar('created_by', { length: 255 }).notNull(), // 作成者のユーザーID
-  inviteCode: varchar('invite_code', { length: 32 }).notNull().unique(), // 招待コード
+  createdBy: uuid('created_by').notNull(), // 作成者のユーザーID (uuid型)
+  joinCode: varchar('join_code', { length: 32 }), // 招待コード (実際のカラム名)
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -46,8 +46,8 @@ export const groups = pgTable('groups', {
 // グループメンバーテーブル
 export const groupMembers = pgTable('group_members', {
   id: serial('id').primaryKey(),
-  groupId: serial('group_id').references(() => groups.id, { onDelete: 'cascade' }),
-  userId: varchar('user_id', { length: 255 }).notNull(), // Supabase AuthのユーザーID
+  groupId: integer('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(), // Supabase AuthのユーザーID (uuid型)
   role: varchar('role', { length: 20 }).notNull().default('member'), // 'admin' または 'member'
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
 });

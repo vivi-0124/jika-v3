@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
+    console.log('グループ取得リクエスト:', { userId, userIdType: typeof userId });
+
     if (!userId) {
       return NextResponse.json({
         success: false,
@@ -27,13 +29,15 @@ export async function GET(request: NextRequest) {
     }
 
     // ユーザーが参加しているグループを取得
+    console.log('クエリ実行前:', { userId });
+    
     const userGroups = await db
       .select({
         id: groups.id,
         name: groups.name,
         description: groups.description,
         createdBy: groups.createdBy,
-        inviteCode: groups.inviteCode,
+        inviteCode: groups.joinCode, // joinCodeを使用
         createdAt: groups.createdAt,
         role: groupMembers.role,
         joinedAt: groupMembers.joinedAt
@@ -43,6 +47,8 @@ export async function GET(request: NextRequest) {
       .where(eq(groupMembers.userId, userId))
       .orderBy(groups.createdAt);
 
+    console.log('クエリ結果:', { userGroups, count: userGroups.length });
+
     return NextResponse.json({
       success: true,
       data: userGroups,
@@ -50,9 +56,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('グループ一覧取得エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
     return NextResponse.json({
       success: false,
-      error: 'グループの取得に失敗しました。もう一度お試しください。'
+      error: `グループの取得に失敗しました: ${errorMessage}`
     }, { status: 500 });
   }
 }
@@ -78,7 +85,7 @@ export async function POST(request: NextRequest) {
       const existing = await db
         .select()
         .from(groups)
-        .where(eq(groups.inviteCode, inviteCode));
+        .where(eq(groups.joinCode, inviteCode));
       
       if (existing.length === 0) {
         codeExists = false;
@@ -102,7 +109,7 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         description: description?.trim() || null,
         createdBy: userId,
-        inviteCode
+        joinCode: inviteCode
       })
       .returning();
 
@@ -125,9 +132,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('グループ作成エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
     return NextResponse.json({
       success: false,
-      error: 'グループの作成に失敗しました。もう一度お試しください。'
+      error: `グループの作成に失敗しました: ${errorMessage}`
     }, { status: 500 });
   }
 } 

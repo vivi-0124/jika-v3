@@ -67,6 +67,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   // Supabase認証ユーザーのIDを使用
   const userId = user?.id || null;
   const isAuthenticated = !!user && !authLoading;
+  
+  // デバッグ情報
+  console.log('UserContext state:', { 
+    user: user ? { id: user.id, email: user.email } : null, 
+    userId, 
+    userIdType: typeof userId,
+    isAuthenticated, 
+    authLoading 
+  });
+
+  // APIが呼ばれている原因を調査
+  useEffect(() => {
+    console.log('UserContext useEffect triggered:', { userId, isAuthenticated });
+  }, [userId, isAuthenticated]);
 
   const refreshSchedule = useCallback(async () => {
     if (!userId) {

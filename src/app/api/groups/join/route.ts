@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const group = await db
       .select()
       .from(groups)
-      .where(eq(groups.inviteCode, inviteCode.toUpperCase()))
+      .where(eq(groups.joinCode, inviteCode.toUpperCase()))
       .limit(1);
 
     if (group.length === 0) {
@@ -67,9 +67,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('グループ参加エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
     return NextResponse.json({
       success: false,
-      error: 'グループの参加に失敗しました。もう一度お試しください。'
+      error: `グループの参加に失敗しました: ${errorMessage}`
     }, { status: 500 });
   }
 } 
