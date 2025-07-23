@@ -34,7 +34,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
 
   if (loading || isRedirecting) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto"></div>
           <p className="mt-4 text-lg">
