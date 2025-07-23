@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users, Calendar, RefreshCw, UserCheck, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Clock, Users, Calendar, RefreshCw, UserCheck, AlertCircle, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Group {
@@ -33,14 +34,36 @@ interface FreeSlotAnalysis {
   freeSlots: TimeSlot[];
 }
 
+interface MemberSchedule {
+  userId: string;
+  role: string;
+  schedules: {
+    lectureId: number;
+    term: string;
+    dayOfWeek: string;
+    period: string;
+    subjectName: string;
+    instructorName: string | null;
+    classroom: string | null;
+  }[];
+}
+
+interface GroupScheduleData {
+  groupId: number;
+  members: MemberSchedule[];
+}
+
 interface GroupScheduleViewProps {
   group: Group;
 }
 
 export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) {
   const [analysis, setAnalysis] = useState<FreeSlotAnalysis | null>(null);
+  const [memberSchedules, setMemberSchedules] = useState<GroupScheduleData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState('前学期');
+  const [activeTab, setActiveTab] = useState('free-slots');
 
   const days = ['月', '火', '水', '木', '金'];
   const periods = ['1', '2', '3', '4', '5'];
@@ -51,6 +74,15 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
     '4': '15:00-16:30',
     '5': '16:45-18:15'
   };
+
+  // ScheduleView.tsxと同じperiod定義
+  const scheduleViewPeriods = [
+    { id: '１限', time: ['08:45', '10:15'] },
+    { id: '２限', time: ['10:30', '12:00'] },
+    { id: '３限', time: ['13:00', '14:30'] },
+    { id: '４限', time: ['14:45', '16:15'] },
+    { id: '５限', time: ['16:30', '18:00'] }
+  ];
 
   // 共通空きコマを取得
   const fetchFreeSlots = async (showToast = false) => {
@@ -78,10 +110,45 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
     }
   };
 
+  // メンバーの時間割を取得
+  const fetchMemberSchedules = async (showToast = false) => {
+    setIsLoadingSchedules(true);
+    try {
+      const response = await fetch(`/api/test-group-schedules?groupId=${group.id}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setMemberSchedules(result.data);
+        if (showToast) {
+          toast.success('メンバー時間割を更新しました');
+        }
+      } else {
+        console.error('メンバー時間割取得エラー:', result.error);
+        toast.error(result.error || 'メンバー時間割の取得に失敗しました');
+        setMemberSchedules(null);
+      }
+    } catch (error) {
+      console.error('メンバー時間割取得エラー:', error);
+      toast.error('メンバー時間割の取得中にエラーが発生しました');
+      setMemberSchedules(null);
+    } finally {
+      setIsLoadingSchedules(false);
+    }
+  };
+
   // 指定された曜日・時限のスロット情報を取得
   const getSlotInfo = (day: string, period: string): TimeSlot | undefined => {
     if (!analysis) return undefined;
     return analysis.timeSlots.find(slot => slot.dayOfWeek === day && slot.period === period);
+  };
+
+  // 指定されたメンバーの曜日・時限の授業を取得
+  const getLectureAtTime = (member: MemberSchedule, day: string, period: string) => {
+    return member.schedules.find(schedule => 
+      schedule.dayOfWeek === day && 
+      schedule.period === period &&
+      schedule.term === selectedTerm
+    );
   };
 
   // スロットのスタイルを取得
@@ -106,7 +173,16 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
 
   useEffect(() => {
     fetchFreeSlots();
+    if (activeTab === 'member-schedules') {
+      fetchMemberSchedules();
+    }
   }, [group.id, selectedTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab === 'member-schedules') {
+      fetchMemberSchedules();
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -117,9 +193,9 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
             <div className="flex-1">
               <CardTitle className="text-lg sm:text-xl text-white flex items-center gap-2">
                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-                共通空きコマ
+                グループ時間割
               </CardTitle>
-              {analysis && (
+              {analysis && activeTab === 'free-slots' && (
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <Badge variant="secondary" className="bg-white/10 text-xs">
                     <Users className="h-3 w-3 mr-1" />
@@ -128,6 +204,14 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
                   <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-xs">
                     <Clock className="h-3 w-3 mr-1" />
                     {analysis.freeSlots.length}コマ空き
+                  </Badge>
+                </div>
+              )}
+              {memberSchedules && activeTab === 'member-schedules' && (
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="bg-white/10 text-xs">
+                    <Users className="h-3 w-3 mr-1" />
+                    {memberSchedules.members.length}人のメンバー
                   </Badge>
                 </div>
               )}
@@ -145,26 +229,44 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => fetchFreeSlots(true)}
-                disabled={isLoading}
+                onClick={() => {
+                  if (activeTab === 'free-slots') {
+                    fetchFreeSlots(true);
+                  } else {
+                    fetchMemberSchedules(true);
+                  }
+                }}
+                disabled={isLoading || isLoadingSchedules}
                 className="bg-black/20 border-white/20 text-white hover:bg-white/10 h-8 w-8 p-0 sm:h-10 sm:w-10"
               >
-                <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${(isLoading || isLoadingSchedules) ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* 時間割表示 */}
-      {isLoading ? (
-        <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-          <CardContent className="p-12 text-center">
-            <RefreshCw className="h-8 w-8 animate-spin text-white/50 mx-auto mb-4" />
-            <p className="text-white/70">共通空きコマを検索中...</p>
-          </CardContent>
-        </Card>
-      ) : analysis ? (
+      {/* タブコンテンツ */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-black/20 border-white/20">
+          <TabsTrigger value="free-slots" className="data-[state=active]:bg-white/10 text-white">
+            共通空きコマ
+          </TabsTrigger>
+          <TabsTrigger value="member-schedules" className="data-[state=active]:bg-white/10 text-white">
+            個別時間割
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="free-slots" className="space-y-4 sm:space-y-6">
+          {/* 共通空きコマ表示 */}
+          {isLoading ? (
+            <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
+              <CardContent className="p-12 text-center">
+                <RefreshCw className="h-8 w-8 animate-spin text-white/50 mx-auto mb-4" />
+                <p className="text-white/70">共通空きコマを検索中...</p>
+              </CardContent>
+            </Card>
+          ) : analysis ? (
         <>
           {/* 時間割グリッド */}
           <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md overflow-hidden">
@@ -315,22 +417,137 @@ export default function GroupScheduleViewNew({ group }: GroupScheduleViewProps) 
             </Card>
           </div>
         </>
-      ) : (
-        <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
-          <CardContent className="p-8 text-center">
-            <AlertCircle className="h-12 w-12 text-white/40 mx-auto mb-4" />
-            <p className="text-white/70">共通空きコマの情報を取得できませんでした</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchFreeSlots(true)}
-              className="mt-4 bg-black/20 border-white/20 text-white hover:bg-white/10"
-            >
-              再試行
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
+              <CardContent className="p-8 text-center">
+                <AlertCircle className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/70">共通空きコマの情報を取得できませんでした</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchFreeSlots(true)}
+                  className="mt-4 bg-black/20 border-white/20 text-white hover:bg-white/10"
+                >
+                  再試行
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="member-schedules" className="space-y-4 sm:space-y-6">
+          {/* メンバー個別時間割表示 */}
+          {isLoadingSchedules ? (
+            <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
+              <CardContent className="p-12 text-center">
+                <RefreshCw className="h-8 w-8 animate-spin text-white/50 mx-auto mb-4" />
+                <p className="text-white/70">メンバー時間割を読み込み中...</p>
+              </CardContent>
+            </Card>
+          ) : memberSchedules && memberSchedules.members.length > 0 ? (
+            <div className="space-y-4 sm:space-y-6">
+              {memberSchedules.members.map((member) => (
+                <Card key={member.userId} className="border-0 shadow-xl bg-black/20 backdrop-blur-md overflow-hidden">
+                  <CardHeader className="pb-2 sm:pb-3">
+                    <CardTitle className="text-sm sm:text-base text-white flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      メンバー {member.userId.slice(0, 8)}...
+                      {member.role === 'admin' && (
+                        <Badge variant="destructive" className="text-xs ml-2">管理者</Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-fixed">
+                        <thead>
+                          <tr className="border-b border-white/20">
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-white/80 w-10 border-r border-white/20"></th>
+                            {days.map((day) => (
+                              <th key={day} className="px-3 py-3 text-center text-sm font-semibold text-white/80 w-1/5 border-r border-white/20">
+                                {day}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {scheduleViewPeriods.map((period) => (
+                            <tr key={period.id} className="border-b border-white/10">
+                              <td className="text-sm font-semibold text-white bg-white/5 w-10 border-r border-white/20">
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-lg text-center">{period.id.replace('限', '')}</span>
+                                  <div className="text-xs text-white/60 text-center">
+                                    <div>{period.time[0]}</div>
+                                    <div>{period.time[1]}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              {days.map((day) => {
+                                const lecture = getLectureAtTime(member, day, period.id);
+                                
+                                return (
+                                  <td key={`${day}-${period.id}`} className="text-sm border-r border-white/10">
+                                    {lecture ? (
+                                      <div className="bg-black/90 backdrop-blur-sm p-2 h-28">
+                                        <div className="h-full flex flex-col justify-between">
+                                          <div className="flex items-start justify-between">
+                                            <div className="flex-1 min-w-0">
+                                              <h4 className="text-xs font-semibold text-white leading-tight line-clamp-2">
+                                                {lecture.subjectName}
+                                              </h4>
+                                            </div>
+                                          </div>
+                                          
+                                          <div className="space-y-0.5">
+                                            {lecture.instructorName && (
+                                              <div className="text-xs text-white line-clamp-1">
+                                                {lecture.instructorName}
+                                              </div>
+                                            )}
+                                            
+                                            {lecture.classroom && (
+                                              <div className="text-xs text-white break-words">
+                                                {lecture.classroom}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="h-28 bg-black/5 border border-white/10 flex items-center justify-center">
+                                        <span className="text-xs text-white/30">-</span>
+                                      </div>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
+              <CardContent className="p-8 text-center">
+                <AlertCircle className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/70">メンバーの時間割情報を取得できませんでした</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchMemberSchedules(true)}
+                  className="mt-4 bg-black/20 border-white/20 text-white hover:bg-white/10"
+                >
+                  再試行
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
