@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Zsh(pnpm build:*)",
+      "mcp__ide__getDiagnostics",
+      "Zsh(pnpm lint:*)",
+      "Zsh(pnpx eslint:*)",
+      "Zsh(grep:*)",
+      "Zsh(cp:*)",
+      "Zsh(pnpx prettier:*)"
+    ],
+    "deny": []
+  }
+}

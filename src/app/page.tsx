@@ -228,7 +228,7 @@ const SearchTabContent = memo(({
 SearchTabContent.displayName = 'SearchTabContent';
 
 const ShareTabContent = memo(() => (
-  <div className="p-6">
+  <div className="space-y-6 pb-20">
     <SharedTab />
   </div>
 ));
