@@ -332,7 +332,7 @@ export default function LoginForm1() {
             <div className="relative">
               <Separator className="block h-px w-full bg-secondary" />
               <p className="absolute inset-x-0 -top-2 mx-auto inline-block w-fit px-2 text-sm bg-background">
-                または
+                or
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">
