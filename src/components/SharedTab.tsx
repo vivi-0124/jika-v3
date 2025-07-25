@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Users, Calendar, Copy, UserPlus, LogOut, ChevronRight, Clock, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
-import GroupScheduleView from '@/components/GroupScheduleView';
+import GroupScheduleView from '@/components/GroupScheduleViewNew';
 
 interface Group {
   id: number;
@@ -24,7 +24,7 @@ interface Group {
   joinedAt: string;
 }
 
-export default function SharedTabNew() {
+export default function SharedTab() {
   const { userId, isAuthenticated } = useUser();
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
