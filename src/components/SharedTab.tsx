@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Users, Calendar, Copy, UserPlus, LogOut, ChevronRight, Clock, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
-import GroupScheduleView from '@/components/GroupScheduleViewNew';
+import GroupScheduleView from '@/components/GroupScheduleView';
 
 interface Group {
   id: number;

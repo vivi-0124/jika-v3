@@ -68,11 +68,11 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
   const days = ['月', '火', '水', '木', '金'];
   const periods = ['1', '2', '3', '4', '5'];
   const periodTimes = {
-    '1': '9:00-10:30',
-    '2': '10:45-12:15',
-    '3': '13:15-14:45',
-    '4': '15:00-16:30',
-    '5': '16:45-18:15'
+    '1': '8:45-10:15',
+    '2': '10:30-12:00',
+    '3': '13:00-14:30',
+    '4': '14:45-16:15',
+    '5': '16:30-18:00'
   };
 
   // ScheduleView.tsxと同じperiod定義
@@ -185,7 +185,7 @@ export default function GroupScheduleView({ group }: GroupScheduleViewProps) {
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-6">
       {/* ヘッダー */}
       <Card className="border-0 shadow-xl bg-black/20 backdrop-blur-md">
         <CardHeader className="pb-3 sm:pb-4">
